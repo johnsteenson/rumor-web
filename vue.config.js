@@ -7,8 +7,9 @@ module.exports = {
     }
   },
   configureWebpack: {
+    devtool: 'source-map',
     devServer: {
-	disableHostCheck: true,
+	      disableHostCheck: true,
         clientLogLevel: 'info',
         watchOptions: {
             poll: true

@@ -1,11 +1,14 @@
 import {Dimension} from '@/types/primitives';
-import {Map, Tool} from '@/types/map';
-import {Tileset} from '@/types/tileset';
+import {TileMap, TileChange, ToolType, TileSelection} from '@/types/map';
+import {Tileset, Tile} from '@/types/tileset';
 
 export interface WorldState {
-  map: Map;
-  tool: Tool;
+  map: TileMap;
+  tool: ToolType;
+  tileSelection: TileSelection;
   tileset: Tileset;
+  curSection: number;
   mapScale: number,
   componentScale: number,
+  changes: TileChange[],
 }

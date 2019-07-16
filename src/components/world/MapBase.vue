@@ -1,0 +1,166 @@
+<template>
+  <div class="map-base">
+    <canvas
+      width="400" 
+      height="300">
+    </canvas>
+  </div>
+</template>
+
+<script lang="ts">
+
+import { ImageManager } from '@/canvas/imageManager';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { TileSize, Rect, Point } from '@/types/primitives';
+import { MapView, TileMap } from '../../types/map';
+
+import { namespace } from 'vuex-class';
+import { TileImage } from '../../canvas/tileImage';
+import { Tileset, TilesetSection } from '../../types/tileset';
+
+import {addResizeHandler} from '@/lib/resizeHandler';
+
+const world = namespace('world');
+
+@Component
+export default class MapBase extends Vue {
+  @Prop() protected mapView!: MapView;
+
+  protected canvas!: HTMLCanvasElement;
+  protected context!: CanvasRenderingContext2D;
+  protected image!: TileImage[];
+  protected tileset!: Tileset;
+  protected tileSize!: TileSize;
+  protected mapOffset!: Point;
+  protected map!: TileMap;
+
+  public mounted() {
+    this.canvas = this.$el.getElementsByTagName('canvas')[0] as HTMLCanvasElement;
+    this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
+
+    const resizeHandler = () => {
+      const rect = this.$el.getBoundingClientRect();
+
+      this.canvas.width = rect.width;
+      this.canvas.height = rect.height;
+
+      this.drawMap();
+    };
+
+    addResizeHandler(resizeHandler);
+
+    setTimeout(resizeHandler, 100); // Temporary stopgap since this is called before box is properly sized
+
+    this.$nextTick(() => {
+      this.$forceUpdate();
+    })
+  }
+  
+  @Watch('mapView.tileset', { immediate: true, deep: true }) tilesetChange(tileset: Tileset) {
+    this.tileset = tileset;
+    this.refreshTilesetImage();
+  }
+
+  @Watch('mapView.tileSize', { immediate: true, deep: true }) tileSizeChange(tileSize: TileSize) {
+    this.tileSize = tileSize;
+    this.refreshTilesetImage();
+  }
+
+  @Watch('mapView.map', { immediate: true, deep: true }) mapViewChange(map: TileMap) {
+    this.map = map;
+    this.drawMap();
+  }
+
+  protected refresh() {
+    this.$nextTick(() => {
+      this.$forceUpdate();
+    });
+  }
+
+  protected async refreshTilesetImage() {
+    if (!this.tileset || !this.tileSize) {
+      return;
+    }
+
+    const mapSectionsToImage = async (section: TilesetSection) => {
+      return await ImageManager.getInstance().getTileImage(`/images/${section.imageFile}`, this.tileSize);
+    }
+
+    this.image = await Promise.all(this.tileset.sections.map(
+        (section: TilesetSection) => mapSectionsToImage(section))
+      );
+    
+    this.drawMap();
+  }
+
+  public calculateCenterCoorOffset(): Point {
+    const boundingRect = this.canvas.getBoundingClientRect();
+
+    const widgetCenterCoor: Point = {
+      x: (boundingRect.right - boundingRect.left) / 2,
+      y: (boundingRect.bottom - boundingRect.top) / 2
+    };
+
+    const mapCenterCoor: Point = {
+      x: this.map.w * this.tileSize.scaledW / 2,
+      y: this.map.h * this.tileSize.scaledH / 2
+    };
+
+    const offset: Point = {
+      x: widgetCenterCoor.x - mapCenterCoor.x,
+      y: widgetCenterCoor.y - mapCenterCoor.y
+    }
+
+    return {
+      x: offset.x > 0 ? offset.x : 0,
+      y: offset.y > 0 ? offset.y : 0
+    }
+  }
+
+  public drawMap() {
+    if (!this.map || !this.image || !this.tileSize) {
+      return;
+    }
+
+    const map = this.map,
+      tileSize = this.tileSize;
+
+    this.mapOffset = this.calculateCenterCoorOffset();
+
+    let x: number = 0,
+      y: number = 0,
+      sx: number = this.mapOffset.x,
+      sy: number = this.mapOffset.y,
+      mapPos: number,
+      tileIndex: number,
+      sectionNum: number;
+
+    for(y = 0; y < map.h; y++) {
+      for(x = 0; x < map.w; x++) {
+        mapPos = map.layer[0].visibleData[ y * map.w + x];
+        sectionNum = mapPos & 0x1C00;
+        tileIndex = mapPos & 0x3ff;
+
+        this.image[sectionNum].drawTile(this.context, sx, sy, tileIndex);
+        sx = sx + tileSize.scaledW;
+      }
+      sx = this.mapOffset.x;
+      sy = sy + tileSize.scaledH;
+    }
+  }
+}
+
+</script>
+
+<style scoped="false">
+  div.map-base {
+    width: 100%;
+    height: 100%;
+
+    border: 1px;
+    border-style: groove solid;
+    background: linear-gradient(#333, #555);
+  }
+
+
+</style>

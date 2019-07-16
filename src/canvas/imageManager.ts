@@ -14,20 +14,20 @@ export class ImageManager {
 
   private static _instance: ImageManager;
 
-  private imageFiles: Map<String, HTMLImageElement>;
+  private imageFiles: Map<String, HTMLImageElement> = new Map<String, HTMLImageElement>();
 
   private constructor() {
 
   }
 
-  public async createTileImage(imagePath: string, tileSize: TileSize): TileImage {
+  public async getTileImage(imagePath: string, tileSize: TileSize): Promise<TileImage> {
     const image: HTMLImageElement = await this.fetchImage(imagePath);
 
     const canvas = document.createElement('canvas'),
       ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-    canvas.width = image.width;
-    canvas.height = image.height;
+    canvas.width = image.width * tileSize.scale;
+    canvas.height = image.height * tileSize.scale;
 
     ctx.drawImage(image,
       0,
@@ -47,9 +47,10 @@ export class ImageManager {
 
       const img: HTMLImageElement = new Image();
 
-      img.onload = () => {
+      img.addEventListener('load', () => {
+        this.imageFiles.set(imagePath, img);
         resolve(img);
-      };
+      });
 
       img.src = imagePath;
     });

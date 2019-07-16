@@ -4,6 +4,11 @@ export interface Dimension {
   h: number;
 }
 
+export interface Point {
+  x: number;
+  y: number;
+}
+
 export interface TileSize {
   w: number;
   h: number;
@@ -18,8 +23,10 @@ export interface Point {
 }
 
 export interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+  t: number;
+  r: number;
+  b: number;
+  l: number;
 }
+
+export type Nullable<T> = T | null;
