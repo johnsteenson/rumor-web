@@ -18,3 +18,5 @@ To run rumor-web locally, run:
 ```
 npm run serve
 ```
+
+Then, navigate to: http://localhost:8080
