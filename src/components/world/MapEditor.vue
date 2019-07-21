@@ -29,10 +29,16 @@ export default class MapEditor extends MapBase {
   @world.Mutation('setTile') setTile: any;
   @world.Mutation('undo') undo: any;
 
-  private baseCoor = {} as Rect;
-  private lastDrawCoor: Point = {x: -1, y: -1};
+  private baseCoor!: Rect;
+  private lastDrawCoor!: Point;
 
-  private isMouseDown: boolean = false;
+  private isMouseDown!: boolean;
+
+  private created() {
+    this.baseCoor = {} as Rect;
+    this.lastDrawCoor = {x: -1, y: -1};
+    this.isMouseDown = false;
+  }
 
   public drawSelectedTiles(clientX: number, clientY: number) {
     const boundingRect = this.canvas.getBoundingClientRect(),
@@ -75,6 +81,9 @@ export default class MapEditor extends MapBase {
   }
 
   public mouseDown(event: MouseEvent) {
+
+    console.log(this.baseCoor);
+
     switch(event.button) {
       case 0:
         this.isMouseDown = true;

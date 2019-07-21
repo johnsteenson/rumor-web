@@ -2,12 +2,12 @@
   <div class="home">
     <div>
       Welcome to Rumor.  Create your dream 2D RPG with your friends.  
-      Only your imagination is the limit.
+      Only your imagination is the limit!
     </div>
     <div>
       <ul>
         <li>
-          <router-link to="/world">World</router-link> - Create the game world
+          <router-link to="/world">World</router-link> - Build the world you dream of!
         </li>
       </ul>
     </div>

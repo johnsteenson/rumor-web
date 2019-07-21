@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <BrowserCheck/>
     <Header/>
     <router-view/>
   </div>
@@ -9,10 +10,12 @@
 
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import Header from '@/components/Header.vue';
+import BrowserCheck from '@/components/BrowserCheck.vue';
 
 @Component({
   components: {
     Header,
+    BrowserCheck
   },
 })
 export default class App extends Vue {
