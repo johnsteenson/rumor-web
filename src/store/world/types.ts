@@ -8,7 +8,7 @@ export interface WorldState {
   tileSelection: TileSelection;
   tileset: Tileset;
   curSection: number;
-  mapScale: number,
-  componentScale: number,
-  changes: TileChange[],
+  mapScale: number;
+  componentScale: number;
+  changes: TileChange[];
 }

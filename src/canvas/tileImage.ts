@@ -38,6 +38,38 @@ export class TileImage {
     );
   }
 
+  public drawSubTiles(destCtx: CanvasRenderingContext2D, x: number, y: number, i: number, flagMask: number) {
+    const sx: number = (i % this.tilesPerRow) * this.tileSize.scaledW,
+      sy: number = Math.floor(i / this.tilesPerRow) * this.tileSize.scaledH,
+      subW: number = this.tileSize.scaledW / 2,
+      subH: number = this.tileSize.scaledH / 2;
+    
+    if(flagMask & 8) { // NW
+      destCtx.drawImage(
+        this.canvas, sx, sy, subW, subH,
+        x, y, subW, subH,
+      );
+    }
+    if(flagMask & 4) { // NE
+      destCtx.drawImage(
+        this.canvas, sx + subW, sy, subW, subH,
+        x + subW, y, subW, subH,
+      );
+    }    
+    if(flagMask & 2) { // SW
+      destCtx.drawImage(
+        this.canvas, sx, sy + subH, subW, subH,
+        x, y + subH, subW, subH,
+      );
+    }
+    if(flagMask & 1) { // SE
+      destCtx.drawImage(
+        this.canvas, sx + subW, sy + subH, subW, subH,
+        x + subW, y + subH, subW, subH,
+      );
+    }
+  }
+
 
 
 }

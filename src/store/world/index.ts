@@ -6,8 +6,8 @@ import { WorldState } from './types';
 import { RootState } from '../types';
 import { TileMap, MapLayer, ToolType, TileChange } from '@/types/map';
 import tileset from '@/data/tileset-world.json';
-import { createMap } from '@/lib/tilemapUtils';
-import { mapTileset } from '@/lib/tilesetUtils';
+import { createMap } from '@/lib/world/tilemap';
+// import { mapTileset } from '@/lib/tilesetUtils';
 import { Tileset } from '@/types/tileset';
 
 const namespaced: boolean = true,
@@ -22,7 +22,7 @@ const namespaced: boolean = true,
       h: 1,
     },
     curSection: 0,
-    tileset: mapTileset(sourceTileset),
+    tileset: sourceTileset,
     mapScale: 2,
     componentScale: 2,
     changes: []

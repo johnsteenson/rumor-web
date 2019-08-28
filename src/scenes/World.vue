@@ -16,15 +16,25 @@
         </MapEditor>
       </div>
     </div>
+
+
   </div>
 </template>
 
 <script lang="ts">
 
+/*
+    <div style="width: 100%; height: 600px; overflow: scroll">
+      <TileDebug :tilesetView="tilesetView" :disableCanvasResize="true">
+      </TileDebug>
+    </div>
+*/
+
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Getter, namespace } from 'vuex-class';
 import MapEditor from '@/components/world/MapEditor.vue';
 import TilePalette from '@/components/world/TilePalette.vue';
+import TileDebug from '@/components/world/TileDebug.vue';
 import { Tileset, TilesetView } from '@/types/tileset';
 import { MapView } from '../types/map';
 
@@ -33,7 +43,8 @@ const world = namespace('world');
 @Component({
   components: {
     MapEditor,
-    TilePalette
+    TilePalette,
+    TileDebug,
   },
 })
 export default class World extends Vue {

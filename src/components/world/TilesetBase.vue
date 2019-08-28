@@ -12,7 +12,7 @@
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { namespace } from 'vuex-class';
 import { ImageManager } from '@/canvas/imageManager';
-import { Tileset, TilesetView, TileAnim, TilesetSection, Tile } from '@/types/tileset';
+import { Tileset, TilesetView, TileAnim, TilesetSection, Tile, TemplateTile } from '@/types/tileset';
 import { TileImage } from '@/canvas/tileImage';
 import { Rect, TileSize } from '@/types/primitives';
 import { TileSelection } from '../../types/map';
@@ -28,6 +28,8 @@ export default class TilesetBase extends Vue {
   protected tilesPerRow: number = 0;
 
   @Prop() protected tilesetView!: TilesetView;
+
+  @Prop() protected disableCanvasResize!: boolean;
 
   @Watch('tilesetView', { immediate: true, deep: true }) tilesetChange(view: TilesetView) {
     this.loadTilesetView(view);
@@ -47,8 +49,10 @@ export default class TilesetBase extends Vue {
     this.section = view.tileset.sections[view.curSection];
     this.image = await ImageManager.getInstance().getTileImage(`/images/${this.section.imageFile}`, view.tileSize);
 
-    this.canvas.width = view.tileSize.scaledW * this.section.tilesPerRow;
-    this.canvas.height = this.image.height;
+    if (!this.disableCanvasResize) {
+      this.canvas.width = view.tileSize.scaledW * this.section.tilesPerRow;
+      this.canvas.height = this.image.height;
+    }
 
     this.tilesPerRow = this.section.tilesPerRow; // Math.floor(this.canvas.width / view.tileSize.scaledW);
     this.draw();
@@ -67,20 +71,23 @@ export default class TilesetBase extends Vue {
       sy: number = 0,
       i = 0,
       k = 0,
+      templateTile: TemplateTile,
+      tileIndex: number,
+      imgTileIndex: number,
       tile: Tile;
 
-    for (i = 1000; i < section.tiles.length; i++) {
+    for (i = 0; i < section.templateTiles.length; i++) {
       if (k > 0 && k % section.tilesPerRow === 0) {
         sx = 0;
         sy = sy + tileSize.scaledH;
       }
 
-      tile = section.tiles[i];
+      templateTile = section.templateTiles[i];
+      tileIndex = Array.isArray(templateTile.tile) ? templateTile.tile[0] : templateTile.tile;
+      tile = section.tiles[tileIndex];
+      imgTileIndex = Array.isArray(tile.t) ? tile.t[0] : tile.t;
 
-      const tileBlock = Array.isArray(tile.tile) ? tile.tile[0] : tile.tile
-      const tileAnim = Array.isArray(tileBlock) ? tileBlock[0] : tileBlock;
-
-      this.image!.drawTile(this.context, sx, sy, tileAnim);
+      this.image!.drawTile(this.context, sx, sy, imgTileIndex);
       sx = sx + tileSize.scaledW;
       k++;
     }

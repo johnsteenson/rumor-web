@@ -1,31 +1,78 @@
 <template>
-  <div class="home">
+  <div>
     <div>
-      Welcome to Rumor.  Create your dream 2D RPG with your friends.  
-      Only your imagination is the limit!
+      <Card title="Rumor">
+        <p>
+          Welcome to Rumor--the web-based RPG creation platform.  Create your dream 2D RPG with your friends.
+          Only your imagination is the limit!
+        </p>
+        <p>
+          Where do you want to go today?
+        </p>
+        <ul>
+          <li>
+            <router-link to="/world">World</router-link> - Design the levels.  Create the world you'll be playing in.
+          </li>
+          <li>
+            <b>Lore</b> - Craft the characters, monsters, and items. (Coming Soon)
+          </li>
+        </ul>
+      </Card>
     </div>
+
     <div>
-      <ul>
-        <li>
-          <router-link to="/world">World</router-link> - Build the world you dream of!
-        </li>
-      </ul>
+      <UpdateList />
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
+import Card from '@/components/ui/Card.vue';
+import UpdateList from '@/components/home/UpdateList.vue';
+import SideBar from '@/components/home/SideBar.vue';
 
 @Component({
   components: {
+    Card,
+    UpdateList,
+    SideBar,
   },
 })
 export default class Home extends Vue {}
 </script>
 
 <style>
-  li {
-    list-style-type: none;
-  }
+
+.home {
+  display: flex;
+  flex-direction: row;
+}
+
+.home-cell-1 {
+  flex-grow: 1;
+}
+
+.home-cell-2 {
+  flex-grow: 1;
+}
+
+a {
+  color: #0000ff;
+  font-weight: bold;
+}
+
+a:hover {
+  color: #009900;
+  font-weight: bold;
+}
+
+ul {
+  list-style: none;
+}
+
+li {
+  margin-bottom: 0.2em;
+}
+
 </style>

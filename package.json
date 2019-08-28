@@ -9,26 +9,27 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
-    "@types/lodash": "^4.14.136",
-    "@vue/cli-service": "^3.9.2",
+    "@types/lodash": "^4.14.137",
+    "@vue/cli-service": "^3.11.0",
     "circular-buffer": "^1.0.2",
-    "lodash": "^4.17.13",
+    "lodash": "^4.17.15",
+    "mem": ">=4.0.0",
     "vue": "^2.6.10",
     "vue-class-component": "^6.3.2",
     "vue-property-decorator": "^7.3.0",
-    "vue-router": "^3.0.7",
+    "vue-router": "^3.1.2",
     "vuex": "^3.1.1",
-    "vuex-class": "^0.3.2",
-    "mem": ">=4.0.0"
+    "vuex-class": "^0.3.2"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.5.0",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@types/jest": "^23.3.14",
-    "@vue/cli-plugin-babel": "^3.9.2",
-    "@vue/cli-plugin-typescript": "^3.9.0",
-    "@vue/cli-plugin-unit-jest": "^3.9.0",
+    "@vue/cli-plugin-babel": "^3.11.0",
+    "@vue/cli-plugin-typescript": "^3.11.0",
+    "@vue/cli-plugin-unit-jest": "^3.11.0",
     "@vue/test-utils": "^1.0.0-beta.29",
     "babel-core": "7.0.0-bridge.0",
+    "jest": "^24.9.0",
     "ts-jest": "^23.10.5",
     "typescript": "^3.5.3",
     "vue-template-compiler": "^2.6.10"

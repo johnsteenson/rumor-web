@@ -2,21 +2,53 @@ import { Dimension, TileSize } from './primitives';
 import { ToolType, TileSelection } from './map';
 
 export enum TileType {
+  EMPTY = 0,
   SINGLE = 1,
-  RECTANGULAR,
+  SINGLE_ANIM = 2,
+  NW_CORNER = 3,
+  NW_CORNER_ANIM = 4,
+  NE_CORNER = 5,
+  NE_CORNER_ANIM = 6,
+  SW_CORNER = 7,
+  SW_CORNER_ANIM = 8,
+  SE_CORNER = 9,
+  SE_CORNER_ANIM = 10,
+}
+
+export enum TemplateTileType {
+  SINGLE = 0,
+  RECTANGULAR = 1,
+  WATER = 2,
+  DEEP_WATER = 3,
+}
+
+export enum PassageType {
+  COPY = 0,
+  WALL = 1,
 }
 
 export type TileAnim = number[] | number;
 
+export interface TemplateTile {
+  type: TemplateTileType;
+  passage: PassageType;
+  prop: number;
+  tile: TileAnim;
+}
+
 export interface Tile {
   type: TileType;
-  tile: TileAnim[];
+  prop: number;
+  t: TileAnim;
+  animLength?: number;
+  quarter?: number;
 }
 
 export interface TilesetSection {
   imageFile: string;
   tilesPerRow: number;
   totalRows: number;
+  templateTiles: TemplateTile[];
   tiles: Tile[];
 }
 

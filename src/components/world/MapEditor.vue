@@ -15,7 +15,7 @@
 
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { TileSize, Rect, Point } from '@/types/primitives';
-import { MapView, TileChangeEntry } from '../../types/map';
+import { MapView, TileChangeEntry, ToolType, TileDrawData, TileDraw } from '../../types/map';
 
 import MapBase from './MapBase.vue';
 
@@ -25,9 +25,9 @@ const world = namespace('world');
 
 @Component
 export default class MapEditor extends MapBase {
-  @world.Mutation('newTileChange') newTileChange: any;
-  @world.Mutation('setTile') setTile: any;
-  @world.Mutation('undo') undo: any;
+  @world.Action('newTileChange') newTileChange: any;
+  @world.Action('pencil') pencil: any;
+  @world.Action('undo') undo: any;
 
   private baseCoor!: Rect;
   private lastDrawCoor!: Point;
@@ -55,35 +55,35 @@ export default class MapEditor extends MapBase {
       y = Math.floor(this.baseCoor.t / this.tileSize.scaledH),
       section = this.mapView.tileset.sections[this.mapView.curSection],
       tileIndex = this.mapView.tileSelection.tileIndices[0],
-      tile = section.tiles[tileIndex].tile[0],
+      templateTile = section.templateTiles[tileIndex],
+      tile = section.tiles[tileIndex].t,
       tileDisplayIndex = Array.isArray(tile) ? tile[0] : tile;
 
-    
-
-    if (x == this.lastDrawCoor.x
-         && y == this.lastDrawCoor.y) {
-           return;
-         }
+    if (this.lastDrawCoor.x === x && this.lastDrawCoor.y === y) {
+      return;
+    }
 
     this.lastDrawCoor.x = x;
     this.lastDrawCoor.y = y;
 
-    const tileChange: TileChangeEntry = {
+    const tileDraw: TileDraw = {
+      x,
+      y,
+      w: 1,
+      h: 1,
       l: 0,
-      x: x,
-      y: y,
-      p: 0,
-      pv: 0,
-      v: tileDisplayIndex
+      data: [
+        {
+          s: this.mapView.curSection,
+          t: tileIndex
+        }
+      ]
     };
-    
-    this.setTile(tileChange);
+
+    this.pencil(tileDraw);
   }
 
   public mouseDown(event: MouseEvent) {
-
-    console.log(this.baseCoor);
-
     switch(event.button) {
       case 0:
         this.isMouseDown = true;

@@ -1,6 +1,6 @@
 import { Tileset, TilesetSection, TileType, TileAnim } from '@/types/tileset';
 
-
+/*
 export function mapSection(inSection: TilesetSection) {
   const tileSection: TilesetSection = {
     imageFile: inSection.imageFile,
@@ -55,3 +55,4 @@ export function mapTileset(inTileset: Tileset) {
 
   return tileset;
 }
+*/

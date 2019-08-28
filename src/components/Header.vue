@@ -24,7 +24,7 @@ export default class Header extends Vue {
     color: #fff;
     background-color: #444444;
     height: 1.2rem;
-    margin-bottom: 1.2rem;
+    margin-bottom: 2px;
   }
 
   #header div  {

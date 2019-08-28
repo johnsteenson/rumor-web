@@ -10,8 +10,15 @@ function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBu
 
   for(let i = 0; i < totalLayers; i++) {
     layers[i] = {
-      data: new Uint16Array(buffer, i * MAP_BYTE_SIZE * totalTiles, totalTiles),
+      templateData: new Uint16Array(buffer, i * MAP_BYTE_SIZE * totalTiles, totalTiles),
       visibleData:  new Uint16Array(buffer, halfPoint + (i * MAP_BYTE_SIZE * totalTiles), totalTiles)
+    }
+
+    for (let j = 0; j < h; j++) {
+      for (let k = 0; k < w; k++) {
+        layers[i].templateData[j * w + k] = 0;
+        layers[i].visibleData[j * w + k] = 1;
+      }
     }
   }
 
@@ -32,4 +39,12 @@ export function createMap(title: string, w: number, h: number) {
   };
 
   return map;
+}
+
+export function unpackMapBuf(val: number): [number, number] {
+  return [(val & 0xF000) >> 12, (val & 0x0FFF)];
+}
+
+export function packMapBuf(sectionNum: number, tileValue: number) {
+  return (sectionNum << 12) | (tileValue & 0x0FFF);
 }

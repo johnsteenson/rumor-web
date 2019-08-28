@@ -1,4 +1,4 @@
-import { Tileset } from './tileset';
+import { Tileset, TemplateTile } from './tileset';
 import { TileSize } from './primitives';
 
 export enum ToolType {
@@ -14,7 +14,7 @@ export interface TileSelection {
 }
 
 export interface MapLayer {
-  data: Uint16Array;
+  templateData: Uint16Array;
   visibleData: Uint16Array;
 }
 
@@ -36,13 +36,28 @@ export interface MapView {
   curSection: number;
 }
 
+export interface TileDraw {
+  x: number;
+  y: number;
+  l: number;
+  w: number;
+  h: number;
+  data: TileDrawData[];
+}
+
+export interface TileDrawData {
+  s: number;
+  t: number;
+}
+
 export interface TileChangeEntry {
   l: number;
   x: number;
   y: number;
-  p: number;
+  pt: number;
   pv: number;
   v: number;
+  t: number;
 }
 
 export interface TileChange {

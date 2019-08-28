@@ -72,7 +72,7 @@ export default class TilePalette extends TilesetBase {
 
     for (let y = t; y < b; y++) {
       for (let x = l; x < r; x++) {
-        tileIndices.push(1000 + (y * this.tilesPerRow) + x)
+        tileIndices.push((y * this.tilesPerRow) + x)
       }
     }
 
@@ -86,8 +86,8 @@ export default class TilePalette extends TilesetBase {
   public getSelectionRect(selection: TileSelection): Rect {
     const firstTile = selection.tileIndices[0],
       tilesPerRow = this.section.tilesPerRow,
-      x = (firstTile - 1000) % tilesPerRow,
-      y = Math.floor((firstTile - 1000) / tilesPerRow),
+      x = (firstTile) % tilesPerRow,
+      y = Math.floor((firstTile) / tilesPerRow),
       tileSize: TileSize = this.tilesetView.tileSize;
 
 

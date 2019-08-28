@@ -20,6 +20,7 @@ export interface TileSize {
 export interface Point {
   x: number;
   y: number;
+  l?: number;
 }
 
 export interface Rect {

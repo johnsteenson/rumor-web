@@ -16,9 +16,11 @@ import { MapView, TileMap } from '../../types/map';
 
 import { namespace } from 'vuex-class';
 import { TileImage } from '../../canvas/tileImage';
-import { Tileset, TilesetSection } from '../../types/tileset';
+import { Tileset, TilesetSection, Tile } from '../../types/tileset';
 
 import {addResizeHandler} from '@/lib/resizeHandler';
+import { unpackMapBuf } from '../../lib/world/tilemap';
+import { getFirstTile } from '../../lib/world/tileset';
 
 const world = namespace('world');
 
@@ -129,19 +131,38 @@ export default class MapBase extends Vue {
 
     let x: number = 0,
       y: number = 0,
+      k: number = 0,
       sx: number = this.mapOffset.x,
       sy: number = this.mapOffset.y,
-      mapPos: number,
+      mapBuf: number,
+      mapVal: number[],
       tileIndex: number,
-      sectionNum: number;
+      sectionNum: number,
+      tile: Tile;
 
     for(y = 0; y < map.h; y++) {
       for(x = 0; x < map.w; x++) {
-        mapPos = map.layer[0].visibleData[ y * map.w + x];
-        sectionNum = mapPos & 0x1C00;
-        tileIndex = mapPos & 0x3ff;
+        mapBuf = map.layer[0].visibleData[ y * map.w + x];
+        mapVal = unpackMapBuf(mapBuf);
 
-        this.image[sectionNum].drawTile(this.context, sx, sy, tileIndex);
+        tile = this.tileset.sections[mapVal[0]].tiles[mapVal[1]];
+
+        if(Array.isArray(tile.t)) {
+          const len: number = tile.animLength || tile.t.length;
+          let quarter: number = tile.quarter || 255;
+
+          for (k = 0; k < len; k++) {
+            this.image[ mapVal[0] ].drawSubTiles(this.context, sx, sy, tile.t[k], quarter);
+            quarter = quarter >> 4;
+          }
+        } else {
+          this.image[ mapVal[0] ].drawTile(this.context, sx, sy, tile.t as number);
+         // this.image!.drawTile(this.context, sx, sy, tile.t as number);
+        }
+
+        //tileIndex = getFirstTile(this.tileset.sections[0].tiles[mapVal[1]].t);
+
+        //this.image[ mapVal[0] ].drawTile(this.context, sx, sy, tileIndex);
         sx = sx + tileSize.scaledW;
       }
       sx = this.mapOffset.x;

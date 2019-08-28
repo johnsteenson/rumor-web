@@ -15,7 +15,8 @@ export const mutations: MutationTree<WorldState> = {
     })
   },
 
-  setTile(state, change: TileChangeEntry) {
+  // Convert this to process an array instead of a single TileChangeEntry
+  changeTile(state, change: TileChangeEntry) {
     if (state.changes.length < 1)
       return;
     
@@ -23,9 +24,9 @@ export const mutations: MutationTree<WorldState> = {
       changes = state.changes[state.changes.length-1],
       layer = state.map.layer[change.l]
 
-    change.p = layer.data[offset];
+    change.pt = layer.templateData[offset];
     change.pv = layer.visibleData[offset];
-    layer.data[offset] = change.v;
+    layer.templateData[offset] = change.t;
     layer.visibleData[offset] = change.v;
 
     changes.entries.push(change);
@@ -43,11 +44,11 @@ export const mutations: MutationTree<WorldState> = {
       const change = lastChanges!.entries[i];
       const offset: number = state.map.w * change.y + change.x;
       const layer = state.map.layer[change.l];
-      layer.data[offset] = change.p;
+      layer.templateData[offset] = change.pt;
       layer.visibleData[offset] = change.pv;
     }
 
     state.map.lastUpdated = new Date();
-  }
+  },
 
 };
