@@ -1,4 +1,5 @@
 import { MapLayer, TileMap } from "@/types/map";
+import { Tileset } from '@/types/tileset';
 
 const MAP_BYTE_SIZE = 2,
   LAYERS = 2;
@@ -8,16 +9,16 @@ function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBu
     totalTiles = w * h,
     halfPoint = buffer.byteLength / 2;
 
-  for(let i = 0; i < totalLayers; i++) {
+  for (let i = 0; i < totalLayers; i++) {
     layers[i] = {
       templateData: new Uint16Array(buffer, i * MAP_BYTE_SIZE * totalTiles, totalTiles),
-      visibleData:  new Uint16Array(buffer, halfPoint + (i * MAP_BYTE_SIZE * totalTiles), totalTiles)
+      visibleData: new Uint16Array(buffer, halfPoint + (i * MAP_BYTE_SIZE * totalTiles), totalTiles)
     }
 
     for (let j = 0; j < h; j++) {
       for (let k = 0; k < w; k++) {
         layers[i].templateData[j * w + k] = 0;
-        layers[i].visibleData[j * w + k] = 1;
+        layers[i].visibleData[j * w + k] = 4;
       }
     }
   }
@@ -39,6 +40,13 @@ export function createMap(title: string, w: number, h: number) {
   };
 
   return map;
+}
+
+export function getTemplateTile(value: number, tileset: Tileset) {
+  const section = (value & 0xF000) >> 12,
+    val = (value & 0x0FFF);
+
+  return tileset.sections[section].templateTiles[val];
 }
 
 export function unpackMapBuf(val: number): [number, number] {

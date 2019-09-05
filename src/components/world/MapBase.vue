@@ -1,28 +1,24 @@
 <template>
   <div class="map-base">
-    <canvas
-      width="400" 
-      height="300">
-    </canvas>
+    <canvas width="400" height="300"></canvas>
   </div>
 </template>
 
 <script lang="ts">
+import { ImageManager } from "@/canvas/imageManager";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { TileSize, Rect, Point } from "@/types/primitives";
+import { MapView, TileMap } from "../../types/map";
 
-import { ImageManager } from '@/canvas/imageManager';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { TileSize, Rect, Point } from '@/types/primitives';
-import { MapView, TileMap } from '../../types/map';
+import { namespace } from "vuex-class";
+import { TileImage } from "../../canvas/tileImage";
+import { Tileset, TilesetSection, Tile } from "../../types/tileset";
 
-import { namespace } from 'vuex-class';
-import { TileImage } from '../../canvas/tileImage';
-import { Tileset, TilesetSection, Tile } from '../../types/tileset';
+import { addResizeHandler } from "@/lib/resizeHandler";
+import { unpackMapBuf } from "../../lib/world/tilemap";
+import { getFirstTile } from "../../lib/world/tileset";
 
-import {addResizeHandler} from '@/lib/resizeHandler';
-import { unpackMapBuf } from '../../lib/world/tilemap';
-import { getFirstTile } from '../../lib/world/tileset';
-
-const world = namespace('world');
+const world = namespace("world");
 
 @Component
 export default class MapBase extends Vue {
@@ -37,8 +33,10 @@ export default class MapBase extends Vue {
   protected map!: TileMap;
 
   public mounted() {
-    this.canvas = this.$el.getElementsByTagName('canvas')[0] as HTMLCanvasElement;
-    this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
+    this.canvas = this.$el.getElementsByTagName(
+      "canvas"
+    )[0] as HTMLCanvasElement;
+    this.context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
 
     const resizeHandler = () => {
       const rect = this.$el.getBoundingClientRect();
@@ -55,20 +53,26 @@ export default class MapBase extends Vue {
 
     this.$nextTick(() => {
       this.$forceUpdate();
-    })
+    });
   }
-  
-  @Watch('mapView.tileset', { immediate: true, deep: true }) tilesetChange(tileset: Tileset) {
+
+  @Watch("mapView.tileset", { immediate: true, deep: true }) tilesetChange(
+    tileset: Tileset
+  ) {
     this.tileset = tileset;
     this.refreshTilesetImage();
   }
 
-  @Watch('mapView.tileSize', { immediate: true, deep: true }) tileSizeChange(tileSize: TileSize) {
+  @Watch("mapView.tileSize", { immediate: true, deep: true }) tileSizeChange(
+    tileSize: TileSize
+  ) {
     this.tileSize = tileSize;
     this.refreshTilesetImage();
   }
 
-  @Watch('mapView.map', { immediate: true, deep: true }) mapViewChange(map: TileMap) {
+  @Watch("mapView.map", { immediate: true, deep: true }) mapViewChange(
+    map: TileMap
+  ) {
     this.map = map;
     this.drawMap();
   }
@@ -85,13 +89,18 @@ export default class MapBase extends Vue {
     }
 
     const mapSectionsToImage = async (section: TilesetSection) => {
-      return await ImageManager.getInstance().getTileImage(`/images/${section.imageFile}`, this.tileSize);
-    }
-
-    this.image = await Promise.all(this.tileset.sections.map(
-        (section: TilesetSection) => mapSectionsToImage(section))
+      return await ImageManager.getInstance().getTileImage(
+        `/images/${section.imageFile}`,
+        this.tileSize
       );
-    
+    };
+
+    this.image = await Promise.all(
+      this.tileset.sections.map((section: TilesetSection) =>
+        mapSectionsToImage(section)
+      )
+    );
+
     this.drawMap();
   }
 
@@ -104,19 +113,19 @@ export default class MapBase extends Vue {
     };
 
     const mapCenterCoor: Point = {
-      x: this.map.w * this.tileSize.scaledW / 2,
-      y: this.map.h * this.tileSize.scaledH / 2
+      x: (this.map.w * this.tileSize.scaledW) / 2,
+      y: (this.map.h * this.tileSize.scaledH) / 2
     };
 
     const offset: Point = {
       x: widgetCenterCoor.x - mapCenterCoor.x,
       y: widgetCenterCoor.y - mapCenterCoor.y
-    }
+    };
 
     return {
       x: offset.x > 0 ? offset.x : 0,
       y: offset.y > 0 ? offset.y : 0
-    }
+    };
   }
 
   public drawMap() {
@@ -140,24 +149,35 @@ export default class MapBase extends Vue {
       sectionNum: number,
       tile: Tile;
 
-    for(y = 0; y < map.h; y++) {
-      for(x = 0; x < map.w; x++) {
-        mapBuf = map.layer[0].visibleData[ y * map.w + x];
+    for (y = 0; y < map.h; y++) {
+      for (x = 0; x < map.w; x++) {
+        mapBuf = map.layer[0].visibleData[y * map.w + x];
         mapVal = unpackMapBuf(mapBuf);
 
         tile = this.tileset.sections[mapVal[0]].tiles[mapVal[1]];
 
-        if(Array.isArray(tile.t)) {
-          const len: number = tile.animLength || tile.t.length;
+        if (Array.isArray(tile.t)) {
+          const len: number = tile.flen || tile.t.length;
           let quarter: number = tile.quarter || 255;
 
           for (k = 0; k < len; k++) {
-            this.image[ mapVal[0] ].drawSubTiles(this.context, sx, sy, tile.t[k], quarter);
+            this.image[mapVal[0]].drawSubTiles(
+              this.context,
+              sx,
+              sy,
+              tile.t[k],
+              quarter
+            );
             quarter = quarter >> 4;
           }
         } else {
-          this.image[ mapVal[0] ].drawTile(this.context, sx, sy, tile.t as number);
-         // this.image!.drawTile(this.context, sx, sy, tile.t as number);
+          this.image[mapVal[0]].drawTile(
+            this.context,
+            sx,
+            sy,
+            tile.t as number
+          );
+          // this.image!.drawTile(this.context, sx, sy, tile.t as number);
         }
 
         //tileIndex = getFirstTile(this.tileset.sections[0].tiles[mapVal[1]].t);
@@ -170,18 +190,15 @@ export default class MapBase extends Vue {
     }
   }
 }
-
 </script>
 
 <style scoped="false">
-  div.map-base {
-    width: 100%;
-    height: 100%;
+div.map-base {
+  width: 100%;
+  height: 100%;
 
-    border: 1px;
-    border-style: groove solid;
-    background: linear-gradient(#333, #555);
-  }
-
-
+  border: 1px;
+  border-style: groove solid;
+  background: linear-gradient(#333, #555);
+}
 </style>

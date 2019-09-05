@@ -1,124 +1,106 @@
 import { MapLayer } from "@/types/map";
-
-const RECT_AUTOTILE_MAP_MASK: Record<number,number> = {
-  0: 0,
-  64: 0,
-  16: 0,
-  80: 8,
-  4: 0,
-  68: 4,
-  20: 0,
-  84: 12,
-  1: 0,
-  65: 0,
-  17: 2,
-  81: 10,
-  5: 1,
-  69: 5,
-  21: 3,
-  85: 15,
-};
-
-const RECT_AUTOTILE_MAP: Record<number,number> = {
-  0: 47,
-  1024: 44,
-  256: 46,
-  1280: 40,
-  1288: 9,
-  64: 45,
-  1088: 36,
-  1092: 7,
-  320: 41,
-  1344: 39,
-  1348: 37,
-  1352: 38,
-  1356: 8,
-  16: 43,
-  1040: 42,
-  272: 14,
-  274: 3,
-  1296: 35,
-  1298: 33,
-  1304: 34,
-  1306: 6,
-  80: 10,
-  81: 1,
-  1104: 17,
-  1105: 15,
-  1108: 16,
-  1109: 4,
-  336: 13,
-  337: 11,
-  338: 12,
-  339: 2,
-  1360: 32,
-  1361: 28,
-  1362: 26,
-  1363: 22,
-  1364: 30,
-  1365: 23,
-  1366: 24,
-  1367: 18,
-  1368: 31,
-  1369: 25,
-  1370: 26,
-  1371: 19,
-  1372: 27,
-  1373: 20,
-  1374: 21,
-  1375: 5,
-}
+import { TemplateTileType, Tileset } from '@/types/tileset';
+import { RECT_AUTOTILE_MAP, RECT_AUTOTILE_MAP_MASK, WATER_AUTOTILE_MAP, WATER_AUTOTILE_MAP_MASK } from './autotile-map';
+import * as tilemap from './tilemap';
+import * as tilesetUtils from './tileset';
 
 const SAME_TILE_N = 1024,
   SAME_TILE_W = 256,
   SAME_TILE_E = 64,
   SAME_TILE_S = 16,
-  WATER_TILE_N = 2048,
-  WATER_TILE_W = 512,
-  WATER_TILE_E = 128,
-  WATER_TILE_S = 32,
+  DEEP_TILE_N = 2048,
+  DEEP_TILE_W = 512,
+  DEEP_TILE_E = 128,
+  DEEP_TILE_S = 32,
   SAME_TILE_NW = 8,
   SAME_TILE_NE = 4,
   SAME_TILE_SW = 2,
   SAME_TILE_SE = 1;
 
-function getAdjacencyMask(layer: MapLayer, x: number, y: number, w: number, h: number, tileValue: number): number {
-  let mask = 0;
-  const leftEdge = x - 1 < 0,
-    rightEdge = x + 1 >= w,
-    topEdge = y - 1 < 0,
-    bottomEdge = y + 1 >= h;
+function matchTerrain(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number, cmpX: number, cmpY: number, newTileTemplateValue: number): number {
+  const sourceTile = tilemap.getTemplateTile(layer.templateData[y * w + x], tileset),
+    surroundingTile = tilemap.getTemplateTile(layer.templateData[cmpY * w + cmpX], tileset);
 
-  if (leftEdge || layer.templateData[y * w + (x - 1)] == tileValue) {
-    mask = mask | SAME_TILE_W;
+  if (cmpX < 0 || cmpX >= w || cmpY < 0 || cmpY >= h) {
+    return 1;
   }
-  if (leftEdge || topEdge || layer.templateData[(y - 1) * w + (x - 1)] == tileValue) {
-    mask = mask | SAME_TILE_NW;
+
+  if (layer.templateData[cmpY * w + cmpX] === newTileTemplateValue) {
+    return 1;
   }
-  if (leftEdge || bottomEdge || layer.templateData[(y + 1) * w + (x - 1)] == tileValue) {
-    mask = mask | SAME_TILE_SW;
+
+  if (sourceTile.terrain && surroundingTile.terrain && sourceTile.terrain === surroundingTile.terrain) {
+    return 1;
   }
-  if (topEdge || layer.templateData[(y - 1) * w + x] == tileValue) {
+
+  return 0;
+}
+
+function matchWater(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number, cmpX: number, cmpY: number, newTileTemplateValue: number): number {
+  const sourceTile = tilemap.getTemplateTile(newTileTemplateValue, tileset),
+    surroundingTile = tilemap.getTemplateTile(layer.templateData[cmpY * w + cmpX], tileset);
+
+  if (cmpX < 0 || cmpX >= w || cmpY < 0 || cmpY >= h) {
+    return 1;
+  }
+
+  if (layer.templateData[cmpY * w + cmpX] === newTileTemplateValue) {
+    return 1;
+  }
+
+  if (surroundingTile.type === TemplateTileType.DEEP_WATER) {
+    return 2;
+  }
+
+  return 0;
+}
+
+function getAdjacencyMask(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number, newTileTemplateValue: number, matchFunc: Function): number {
+  let mask = 0;
+
+  const match = (cx: number, cy: number) => matchFunc(layer, tileset, x, y, w, h, cx, cy, newTileTemplateValue),
+    matchN = match(x, y - 1),
+    matchW = match(x - 1, y),
+    matchE = match(x + 1, y),
+    matchS = match(x, y + 1);
+
+  if (matchN === 1)
     mask = mask | SAME_TILE_N;
-  }
-  if (topEdge || rightEdge || layer.templateData[(y - 1) * w + (x + 1)] == tileValue) {
-    mask = mask | SAME_TILE_NE;
-  }
-  if (rightEdge || layer.templateData[y * w + (x + 1)] == tileValue) {
+  else if (matchN === 1)
+    mask = mask | DEEP_TILE_N;
+
+  if (matchW === 1)
+    mask = mask | SAME_TILE_W;
+  else if (matchW === 1)
+    mask = mask | DEEP_TILE_W;
+
+  if (matchE === 1)
     mask = mask | SAME_TILE_E;
-  }
-  if (bottomEdge || rightEdge || layer.templateData[(y + 1) * w + (x + 1)] == tileValue) {
-    mask = mask | SAME_TILE_SE;
-  }
-  if ( bottomEdge || layer.templateData[(y + 1) * w + x] == tileValue) {
+  else if (matchE === 1)
+    mask = mask | DEEP_TILE_E;
+
+  if (matchS === 1)
     mask = mask | SAME_TILE_S;
-  }
+  else if (matchS === 1)
+    mask = mask | DEEP_TILE_S;
+
+  if (match(x - 1, y - 1) > 0)
+    mask = mask | SAME_TILE_NW;
+
+  if (match(x + 1, y - 1) > 0)
+    mask = mask | SAME_TILE_NE;
+
+  if (match(x - 1, y + 1) > 0)
+    mask = mask | SAME_TILE_SW;
+
+  if (match(x + 1, y + 1) > 0)
+    mask = mask | SAME_TILE_SE;
 
   return mask;
 }
 
-export function getRectangularTileIndex(layer: MapLayer, x: number, y: number, w: number, h: number, templateTileValue: number) {
-  const mask: number = getAdjacencyMask(layer, x, y, w, h, templateTileValue),
+export function getRectangularTileIndex(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number, templateTileValue: number) {
+  const mask: number = getAdjacencyMask(layer, tileset, x, y, w, h, templateTileValue, matchTerrain),
     nwesBits: number = (mask & 4080) >> 4,
     maskValue = RECT_AUTOTILE_MAP_MASK[nwesBits],
     diagBits = (mask & 0xF) & maskValue,
@@ -127,30 +109,61 @@ export function getRectangularTileIndex(layer: MapLayer, x: number, y: number, w
   return RECT_AUTOTILE_MAP[normalizedMask];
 }
 
+export function getWaterTileIndex(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number, templateTileValue: number) {
+  const mask: number = getAdjacencyMask(layer, tileset, x, y, w, h, templateTileValue, matchWater),
+    nwesBits: number = (mask & 4080) >> 4,
+    maskValue = WATER_AUTOTILE_MAP_MASK[nwesBits],
+    diagBits = (mask & 0xF) & maskValue,
+    normalizedMask = (nwesBits << 4) | diagBits;
+
+  return WATER_AUTOTILE_MAP[normalizedMask];
+}
+
+export function calculateTileValue(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number, templateTileValue: number) {
+  const templateTile = tilemap.getTemplateTile(templateTileValue, tileset),
+    sectionId = tilemap.unpackMapBuf(templateTileValue)[0];
+
+  let tileIndex;
+
+  switch (templateTile.type) {
+    case TemplateTileType.SINGLE:
+      return tilemap.packMapBuf(sectionId, tilesetUtils.getFirstTile(templateTile.tile));
+
+    case TemplateTileType.RECTANGULAR:
+      tileIndex = getRectangularTileIndex(layer, tileset, x, y, w, h, templateTileValue);
+      return Array.isArray(templateTile.tile) ? templateTile.tile[tileIndex] : 0;
+
+    case TemplateTileType.WATER:
+      tileIndex = getWaterTileIndex(layer, tileset, x, y, w, h, templateTileValue);
+      return Array.isArray(templateTile.tile) ? templateTile.tile[tileIndex] : 0;
+  }
+
+}
+
 export function visitSurroundingTiles(x: number, y: number, w: number, h: number, mapW: number, mapH: number, visitorCallback: Function) {
   const callInBounds = (ix: number, iy: number) => {
-    if ( ix >= 0 && ix < mapW && iy >= 0 && iy < mapW ) {
+    if (ix >= 0 && ix < mapW && iy >= 0 && iy < mapW) {
       visitorCallback(ix, iy);
     }
   }
 
   // Start with top edge
-  for(let i = x - 1; i <= x + w; i++) {
+  for (let i = x - 1; i <= x + w; i++) {
     callInBounds(i, y - 1);
   }
 
   // Bottom edge
-  for(let i = x - 1; i <= x + w; i++) {
+  for (let i = x - 1; i <= x + w; i++) {
     callInBounds(i, y + h);
   }
 
   // Left edge
-  for(let i = y; i < y + h; i++) {
+  for (let i = y; i < y + h; i++) {
     callInBounds(x - 1, i);
   }
 
   // Right edge
-  for(let i = y; i < y + h; i++) {
+  for (let i = y; i < y + h; i++) {
     callInBounds(x + w, i);
   }
 }

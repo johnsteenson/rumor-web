@@ -32,6 +32,7 @@ export type TileAnim = number[] | number;
 export interface TemplateTile {
   type: TemplateTileType;
   passage: PassageType;
+  terrain?: number;
   prop: number;
   tile: TileAnim;
 }
@@ -40,7 +41,7 @@ export interface Tile {
   type: TileType;
   prop: number;
   t: TileAnim;
-  animLength?: number;
+  flen?: number;
   quarter?: number;
 }
 

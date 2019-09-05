@@ -4,22 +4,22 @@ import { RootState } from '../types';
 import { TileChangeEntry, TileDrawData, MapLayer, TileDraw } from '@/types/map';
 import { TileType, TemplateTileType } from '@/types/tileset';
 
-import { getRectangularTileIndex, visitSurroundingTiles } from '@/lib/world/autotile'
+import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue } from '@/lib/world/autotile'
 import { Point } from '@/types/primitives';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { getFirstTile } from '@/lib/world/tileset';
 
 export const actions: ActionTree<WorldState, RootState> = {
 
-  newTileChange({commit}) {
+  newTileChange({ commit }) {
     commit('newTileChange');
   },
 
-  correctAutotiles({commit, dispatch, state}, points: Point[]) {
+  correctAutotiles({ commit, dispatch, state }, points: Point[]) {
     const w = state.map.w,
       h = state.map.h;
 
-    let tileValue, tileIndex;
+    let tileValue;
 
     for (let point of points) {
       const layer = state.map.layer[point.l!],
@@ -27,32 +27,27 @@ export const actions: ActionTree<WorldState, RootState> = {
         unpackedVal = unpackMapBuf(templateTileValue),
         templateTile = state.tileset.sections[unpackedVal[0]].templateTiles[unpackedVal[1]];
 
-
-      switch(templateTile.type) {
-        case TemplateTileType.SINGLE:
-          break;
-
-        case TemplateTileType.RECTANGULAR:
-          tileIndex = getRectangularTileIndex(layer, point.x, point.y, w, h, templateTileValue);
-          tileValue = Array.isArray(templateTile.tile) ? templateTile.tile[tileIndex] : 0;
-          commit('changeTile', {
-            x: point.x,
-            y: point.y,
-            l: point.l,
-            t: templateTileValue,
-            v: tileValue,
-          });
-          break;
+      if (templateTile.type === TemplateTileType.SINGLE) {
+        continue;
       }
+
+      tileValue = calculateTileValue(layer, state.tileset, point.x, point.y, w, h, templateTileValue);
+      commit('changeTile', {
+        x: point.x,
+        y: point.y,
+        l: point.l,
+        t: templateTileValue,
+        v: tileValue,
+      });
     }
   },
 
-  pencil({commit, dispatch, state}, tileDraw: TileDraw) {
+  pencil({ commit, dispatch, state }, tileDraw: TileDraw) {
     const w = state.map.w,
       h = state.map.h,
       surroundingTiles: Point[] = [];
 
-    for(let drawData of tileDraw.data) {
+    for (let drawData of tileDraw.data) {
       const layer = state.map.layer[tileDraw.l];
       const section = state.tileset.sections[drawData.s];
       const templateTile = section.templateTiles[drawData.t];
@@ -60,7 +55,17 @@ export const actions: ActionTree<WorldState, RootState> = {
 
       let tileValue, tileIndex;
 
-      switch(templateTile.type) {
+      tileValue = calculateTileValue(layer, state.tileset, tileDraw.x, tileDraw.y, w, h, templateTileValue);
+      commit('changeTile', {
+        x: tileDraw.x,
+        y: tileDraw.y,
+        l: tileDraw.l,
+        t: templateTileValue,
+        v: tileValue,
+      });
+
+      /*
+      switch (templateTile.type) {
         case TemplateTileType.SINGLE:
           tileValue = packMapBuf(drawData.s, getFirstTile(templateTile.tile));
           commit('changeTile', {
@@ -74,7 +79,19 @@ export const actions: ActionTree<WorldState, RootState> = {
           break;
 
         case TemplateTileType.RECTANGULAR:
-          tileIndex = getRectangularTileIndex(layer, tileDraw.x, tileDraw.y, w, h, templateTileValue);
+          tileIndex = getRectangularTileIndex(layer, state.tileset, tileDraw.x, tileDraw.y, w, h, templateTileValue);
+          tileValue = Array.isArray(templateTile.tile) ? templateTile.tile[tileIndex] : 0;
+          commit('changeTile', {
+            x: tileDraw.x,
+            y: tileDraw.y,
+            l: tileDraw.l,
+            t: templateTileValue,
+            v: tileValue,
+          });
+          break;
+
+        case TemplateTileType.WATER:
+          tileIndex = getWaterTileIndex(layer, state.tileset, tileDraw.x, tileDraw.y, w, h, templateTileValue);
           tileValue = Array.isArray(templateTile.tile) ? templateTile.tile[tileIndex] : 0;
           commit('changeTile', {
             x: tileDraw.x,
@@ -85,6 +102,7 @@ export const actions: ActionTree<WorldState, RootState> = {
           });
           break;
       }
+      */
 
       visitSurroundingTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, (px: number, py: number) => {
         surroundingTiles.push({
@@ -99,7 +117,7 @@ export const actions: ActionTree<WorldState, RootState> = {
     }
   },
 
-  undo({commit}) {
+  undo({ commit }) {
     commit('undo');
   },
 
