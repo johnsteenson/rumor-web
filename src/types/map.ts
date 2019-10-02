@@ -2,7 +2,7 @@ import { Tileset, TemplateTile } from './tileset';
 import { TileSize } from './primitives';
 
 export enum ToolType {
-  PENCIL = 1,
+  PENCIL = 0,
   FILL,
   RECTANGLE,
 }

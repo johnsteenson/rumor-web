@@ -1,33 +1,39 @@
 <template>
   <div class="map-base">
     <canvas
-      @mousedown="mouseDown" 
-      @mousemove="mouseMove" 
+      @mousedown="mouseDown"
+      @mousemove="mouseMove"
       @mouseup="mouseUp"
       @contextmenu="contextMenu"
-      width="400" 
-      height="300">
-    </canvas>
+      width="400"
+      height="300"
+    ></canvas>
   </div>
 </template>
 
 <script lang="ts">
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { TileSize, Rect, Point } from "@/types/primitives";
+import {
+  MapView,
+  TileChangeEntry,
+  ToolType,
+  TileDrawData,
+  TileDraw
+} from "../../types/map";
 
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { TileSize, Rect, Point } from '@/types/primitives';
-import { MapView, TileChangeEntry, ToolType, TileDrawData, TileDraw } from '../../types/map';
+import MapBase from "./MapBase.vue";
 
-import MapBase from './MapBase.vue';
+import { namespace } from "vuex-class";
 
-import { namespace } from 'vuex-class';
-
-const world = namespace('world');
+const world = namespace("world");
 
 @Component
 export default class MapEditor extends MapBase {
-  @world.Action('newTileChange') newTileChange: any;
-  @world.Action('pencil') pencil: any;
-  @world.Action('undo') undo: any;
+  @world.Action("newTileChange") newTileChange: any;
+  @world.Action("pencil") pencil: any;
+  @world.Action("fill") fill: any;
+  @world.Action("undo") undo: any;
 
   private baseCoor!: Rect;
   private lastDrawCoor!: Point;
@@ -36,7 +42,7 @@ export default class MapEditor extends MapBase {
 
   private created() {
     this.baseCoor = {} as Rect;
-    this.lastDrawCoor = {x: -1, y: -1};
+    this.lastDrawCoor = { x: -1, y: -1 };
     this.isMouseDown = false;
   }
 
@@ -80,11 +86,20 @@ export default class MapEditor extends MapBase {
       ]
     };
 
-    this.pencil(tileDraw);
+    switch (this.mapView.tool) {
+      case ToolType.PENCIL:
+        this.pencil(tileDraw);
+        break;
+
+      case ToolType.FILL:
+        this.isMouseDown = false;
+        this.fill(tileDraw);
+        break;
+    }
   }
 
   public mouseDown(event: MouseEvent) {
-    switch(event.button) {
+    switch (event.button) {
       case 0:
         this.isMouseDown = true;
 
@@ -97,7 +112,7 @@ export default class MapEditor extends MapBase {
 
         break;
     }
-    
+
     this.refresh();
   }
 
@@ -111,17 +126,13 @@ export default class MapEditor extends MapBase {
     if (this.isMouseDown) {
       this.drawSelectedTiles(event.clientX, event.clientY);
     }
-
   }
 
   public contextMenu(event: MouseEvent) {
     event.preventDefault();
   }
-
 }
-
 </script>
 
 <style>
-
 </style>

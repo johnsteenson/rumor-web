@@ -4,6 +4,7 @@ import router from './router';
 import store from './store/index';
 
 import './rumor.css';
+import 'vue-material-design-icons/styles.css';
 
 Vue.config.productionTip = false;
 

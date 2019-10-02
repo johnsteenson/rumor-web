@@ -19,9 +19,9 @@ export const mutations: MutationTree<WorldState> = {
   changeTile(state, change: TileChangeEntry) {
     if (state.changes.length < 1)
       return;
-    
+
     const offset: number = state.map.w * change.y + change.x,
-      changes = state.changes[state.changes.length-1],
+      changes = state.changes[state.changes.length - 1],
       layer = state.map.layer[change.l]
 
     change.pt = layer.templateData[offset];
@@ -40,7 +40,7 @@ export const mutations: MutationTree<WorldState> = {
 
     const lastChanges = state.changes.pop();
 
-    for (let i = lastChanges!.entries.length-1; i >= 0; i--) {
+    for (let i = lastChanges!.entries.length - 1; i >= 0; i--) {
       const change = lastChanges!.entries[i];
       const offset: number = state.map.w * change.y + change.x;
       const layer = state.map.layer[change.l];
@@ -50,5 +50,9 @@ export const mutations: MutationTree<WorldState> = {
 
     state.map.lastUpdated = new Date();
   },
+
+  setTool(state, toolId: number) {
+    state.tool = toolId;
+  }
 
 };
