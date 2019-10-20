@@ -5,17 +5,13 @@ const handlers: Map<Element, Function> = new Map();
 let observer: ResizeObserver;
 
 if (window.ResizeObserver) {
-  observer = new window.ResizeObserver((entries: any, observer: ResizeObserver) => {
-    for (let entry of entries) {
+  observer = new window.ResizeObserver((entries: any, obs: ResizeObserver) => {
+    for (const entry of entries) {
       const handler = handlers.get(entry.target);
-
-      observer.unobserve(entry.target);
 
       if (handler) {
         handler(entry.target, entry.contentRect);
       }
-
-      observer.observe(entry.target);
     }
   });
 } else {

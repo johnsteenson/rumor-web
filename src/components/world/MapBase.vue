@@ -43,29 +43,12 @@ export default class MapBase extends Vue {
     )[0] as HTMLCanvasElement;
     this.context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
 
-    /*
-    const resizeHandler = () => {
-      const rect = this.$el.getBoundingClientRect();
-
-      this.canvas.width = rect.width;
-      this.canvas.height = rect.height;
-
-      this.drawMap();
-    };
-    */
-
     resizeHandler.add(this.$el, (el: Element, rect: DOMRect) => {
-      console.log(rect);
-
-      //      this.callResize(Math.floor(rect.width), Math.floor(rect.height));
       this.canvas.width = Math.floor(rect.width);
       this.canvas.height = Math.floor(rect.height);
 
       this.drawMap();
     });
-    // addResizeHandler(resizeHandler);
-
-    // setTimeout(resizeHandler, 100); // Temporary stopgap since this is called before box is properly sized
 
     this.$nextTick(() => {
       this.$forceUpdate();

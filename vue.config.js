@@ -1,5 +1,6 @@
 
 module.exports = {
+  /*
   devServer: {
     clientLogLevel: 'info',
     watchOptions: {
@@ -16,6 +17,7 @@ module.exports = {
       }
     }
   },
+  */
   productionSourceMap: false,
   lintOnSave: false,
 }

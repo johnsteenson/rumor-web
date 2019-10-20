@@ -65,28 +65,20 @@ div.world {
 div.container {
   display: grid;
   grid-template-columns: 2fr minmax(0, 10fr);
-  grid-template-rows: minmax(0, 100%);
+  grid-template-rows: minmax(0, max-content);
   height: 100%;
   min-height: 0;
   min-width: 0;
   max-height: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
 }
 
 .world-tile-selector {
   grid-column-start: 1;
   grid-column-end: 2;
-  min-height: 0;
-  overflow: hidden;
 }
 
 .world-map-editor {
   grid-column-start: 2;
   grid-column-end: 3;
-  box-sizing: border-box;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
 }
 </style>
