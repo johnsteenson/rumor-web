@@ -1,3 +1,8 @@
+/*
+   This code contains the mappings of the adjacency edges, which is auto-generated from a script.
+   Do not manually edit thie file.
+*/
+
 export const WATER_AUTOTILE_MAP_MASK: Record<number, number> = {
   0: 0,
   64: 0,
@@ -80,7 +85,7 @@ export const WATER_AUTOTILE_MAP_MASK: Record<number, number> = {
   42: 3,
   106: 0,
   170: 0,
-}
+};
 
 export const WATER_AUTOTILE_MAP: Record<number, number> = {
   0: 0,

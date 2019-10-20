@@ -14,10 +14,10 @@ import { namespace } from "vuex-class";
 import { TileImage } from "../../canvas/tileImage";
 import { Tileset, TilesetSection, Tile } from "../../types/tileset";
 
-import { addResizeHandler } from "@/lib/resizeHandler";
+import * as resizeHandler from "@/lib/resizeHandler";
 import { unpackMapBuf } from "../../lib/world/tilemap";
 import { getFirstTile } from "../../lib/world/tileset";
-
+import { throttle } from "lodash";
 const world = namespace("world");
 
 @Component
@@ -32,12 +32,18 @@ export default class MapBase extends Vue {
   protected mapOffset!: Point;
   protected map!: TileMap;
 
+  protected callResize: Function = throttle((w: number, h: number) => {
+    this.canvas.width = w;
+    this.canvas.height = h;
+  }, 300);
+
   public mounted() {
     this.canvas = this.$el.getElementsByTagName(
       "canvas"
     )[0] as HTMLCanvasElement;
     this.context = this.canvas.getContext("2d") as CanvasRenderingContext2D;
 
+    /*
     const resizeHandler = () => {
       const rect = this.$el.getBoundingClientRect();
 
@@ -46,10 +52,20 @@ export default class MapBase extends Vue {
 
       this.drawMap();
     };
+    */
 
-    addResizeHandler(resizeHandler);
+    resizeHandler.add(this.$el, (el: Element, rect: DOMRect) => {
+      console.log(rect);
 
-    setTimeout(resizeHandler, 100); // Temporary stopgap since this is called before box is properly sized
+      //      this.callResize(Math.floor(rect.width), Math.floor(rect.height));
+      this.canvas.width = Math.floor(rect.width);
+      this.canvas.height = Math.floor(rect.height);
+
+      this.drawMap();
+    });
+    // addResizeHandler(resizeHandler);
+
+    // setTimeout(resizeHandler, 100); // Temporary stopgap since this is called before box is properly sized
 
     this.$nextTick(() => {
       this.$forceUpdate();
@@ -193,11 +209,19 @@ export default class MapBase extends Vue {
 </script>
 
 <style scoped="false">
+canvas {
+  position: absolute;
+}
+
 div.map-base {
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 100%;
+  min-height: 100%;
 
-  border: 1px;
+  border: 1;
   border-style: groove solid;
   background: linear-gradient(#333, #555);
 }

@@ -25,13 +25,13 @@ const namespaced: boolean = true,
     tileset: sourceTileset,
     mapScale: 2,
     componentScale: 2,
-    changes: []
+    changes: [],
   };
 
 export const worldModule: Module<WorldState, RootState> = {
-    namespaced,
-    state,
-    getters,
-    actions,
-    mutations,
+  namespaced,
+  state,
+  getters,
+  actions,
+  mutations,
 };

@@ -11,12 +11,28 @@
     ]
   },
   "rules": {
-    "quotemark": [true, "single"],
-    "indent": [true, "spaces", 2],
+    "quotemark": false,
+    "indent": [
+      true,
+      "spaces",
+      2
+    ],
+    "align": false,
+    "ban-types": false,
     "interface-name": false,
+    "member-access": false,
+    "no-bitwise": false,
     "ordered-imports": false,
     "object-literal-sort-keys": false,
+    "one-line": false,
     "no-consecutive-blank-lines": false,
-    "one-variable-per-declaration": false
+    "one-variable-per-declaration": false,
+    "trailing-comma": [
+      true,
+      {
+        "multiline": "ignore",
+        "singleline": "never"
+      }
+    ]
   }
 }

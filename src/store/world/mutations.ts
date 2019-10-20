@@ -11,18 +11,19 @@ export const mutations: MutationTree<WorldState> = {
 
   newTileChange(state) {
     state.changes.push({
-      entries: []
-    })
+      entries: [],
+    });
   },
 
   // Convert this to process an array instead of a single TileChangeEntry
   changeTile(state, change: TileChangeEntry) {
-    if (state.changes.length < 1)
+    if (state.changes.length < 1) {
       return;
+    }
 
     const offset: number = state.map.w * change.y + change.x,
       changes = state.changes[state.changes.length - 1],
-      layer = state.map.layer[change.l]
+      layer = state.map.layer[change.l];
 
     change.pt = layer.templateData[offset];
     change.pv = layer.visibleData[offset];
@@ -35,8 +36,9 @@ export const mutations: MutationTree<WorldState> = {
   },
 
   undo(state) {
-    if (state.changes.length < 1)
+    if (state.changes.length < 1) {
       return;
+    }
 
     const lastChanges = state.changes.pop();
 
@@ -53,6 +55,6 @@ export const mutations: MutationTree<WorldState> = {
 
   setTool(state, toolId: number) {
     state.tool = toolId;
-  }
+  },
 
 };

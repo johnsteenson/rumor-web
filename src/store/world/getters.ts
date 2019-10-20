@@ -16,9 +16,34 @@ export const getters: GetterTree<WorldState, RootState> = {
       return null;
     }
 
-    const {w, h} = state.tileset.tileSize,
+    const { w, h } = state.tileset.tileSize,
       scale = state.componentScale,
       tilesetView: TilesetView = {
+        tileset: state.tileset,
+        tileSize: {
+          w,
+          h,
+          scale,
+          scaledW: w * scale,
+          scaledH: h * scale,
+        },
+        tool: state.tool,
+        tileSelection: state.tileSelection,
+        curSection: state.curSection,
+      };
+
+    return tilesetView;
+  },
+
+  getMapView(state: WorldState): Nullable<MapView> {
+    if (!state.map) {
+      return null;
+    }
+
+    const { w, h } = state.tileset.tileSize,
+      scale = state.mapScale,
+      mapView: MapView = {
+        map: state.map,
         tileset: state.tileset,
         tileSize: {
           w,
@@ -29,37 +54,12 @@ export const getters: GetterTree<WorldState, RootState> = {
         },
         tool: state.tool,
         tileSelection: state.tileSelection,
-        curSection: state.curSection
-    }
-
-    return tilesetView;
-  },
-
-  getMapView(state: WorldState): Nullable<MapView> {
-    if (!state.map) {
-      return null;
-    }
-
-    const {w,h} = state.tileset.tileSize,
-      scale = state.mapScale,
-      mapView: MapView = {
-        map: state.map,
-        tileset: state.tileset,
-        tileSize: {
-          w,
-          h,
-          scale,
-          scaledW: w * scale,
-          scaledH: h * scale 
-        },
-        tool: state.tool,
-        tileSelection: state.tileSelection,
-        curSection: state.curSection
+        curSection: state.curSection,
       };
 
-    
+
 
     return mapView;
-  }
+  },
 
 };

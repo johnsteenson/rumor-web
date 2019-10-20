@@ -1,4 +1,4 @@
-import { MapLayer, TileMap } from "@/types/map";
+import { MapLayer, TileMap } from '@/types/map';
 import { Tileset } from '@/types/tileset';
 
 const MAP_BYTE_SIZE = 2,
@@ -13,7 +13,7 @@ function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBu
     layers[i] = {
       templateData: new Uint16Array(buffer, i * MAP_BYTE_SIZE * totalTiles, totalTiles),
       visibleData: new Uint16Array(buffer, halfPoint + (i * MAP_BYTE_SIZE * totalTiles), totalTiles)
-    }
+    };
 
     for (let j = 0; j < h; j++) {
       for (let k = 0; k < w; k++) {

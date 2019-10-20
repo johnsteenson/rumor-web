@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils';
-import {visitSurroundingTiles, getRectangularTileIndex} from '@/lib/world/autotile';
+import { visitSurroundingTiles, getRectangularTileIndex } from '@/lib/world/autotile';
 
 describe('Autotile Helpers', () => {
   it('should visit all surrounding tiles for 1x1 placement', () => {
@@ -17,7 +17,7 @@ describe('Autotile Helpers', () => {
     set.add('5,3');
     set.add('3,2');
     set.add('5,2');
-    
+
     visitSurroundingTiles(X, Y, 1, 1, W, H, (x: number, y: number) => {
       const key = `${x},${y}`;
       expect(set.has(key)).toBeTruthy();
@@ -39,7 +39,7 @@ describe('Autotile Helpers', () => {
     set.add('0,3');
     set.add('1,3');
     set.add('1,2');
-    
+
     visitSurroundingTiles(X, Y, 1, 1, W, H, (x: number, y: number) => {
       const key = `${x},${y}`;
       expect(set.has(key)).toBeTruthy();

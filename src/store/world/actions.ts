@@ -4,7 +4,7 @@ import { RootState } from '../types';
 import { TileChangeEntry, TileDrawData, MapLayer, TileDraw } from '@/types/map';
 import { TileType, TemplateTileType } from '@/types/tileset';
 
-import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue } from '@/lib/world/autotile'
+import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue } from '@/lib/world/autotile';
 import { Point } from '@/types/primitives';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { getFirstTile } from '@/lib/world/tileset';
@@ -21,7 +21,7 @@ export const actions: ActionTree<WorldState, RootState> = {
 
     let tileValue;
 
-    for (let point of points) {
+    for (const point of points) {
       const layer = state.map.layer[point.l!],
         templateTileValue = layer.templateData[point.y * w + point.x],
         unpackedVal = unpackMapBuf(templateTileValue),
@@ -47,13 +47,13 @@ export const actions: ActionTree<WorldState, RootState> = {
       h = state.map.h,
       surroundingTiles: Point[] = [];
 
-    for (let drawData of tileDraw.data) {
+    for (const drawData of tileDraw.data) {
       const layer = state.map.layer[tileDraw.l];
       const section = state.tileset.sections[drawData.s];
       const templateTile = section.templateTiles[drawData.t];
       const templateTileValue = packMapBuf(drawData.s, drawData.t);
 
-      let tileValue, tileIndex;
+      let tileValue;
 
       tileValue = calculateTileValue(layer, state.tileset, tileDraw.x, tileDraw.y, w, h, templateTileValue);
       commit('changeTile', {
@@ -69,7 +69,7 @@ export const actions: ActionTree<WorldState, RootState> = {
           x: px,
           y: py,
           l: tileDraw.l
-        })
+        });
 
       });
 
@@ -81,7 +81,7 @@ export const actions: ActionTree<WorldState, RootState> = {
     const w = state.map.w,
       h = state.map.h;
 
-    for (let drawData of tileDraw.data) {
+    for (const drawData of tileDraw.data) {
       const layer = state.map.layer[tileDraw.l];
       const section = state.tileset.sections[drawData.s];
       const templateTile = section.templateTiles[drawData.t];
@@ -98,19 +98,19 @@ export const actions: ActionTree<WorldState, RootState> = {
           v: tileValue,
         });
 
-        if (x > 0 && layer.templateData[y * w + (x - 1)] == repTTV) {
+        if (x > 0 && layer.templateData[y * w + (x - 1)] === repTTV) {
           doFill(x - 1, y, repTTV);
         }
 
-        if (y > 0 && layer.templateData[(y - 1) * w + x] == repTTV) {
+        if (y > 0 && layer.templateData[(y - 1) * w + x] === repTTV) {
           doFill(x, y - 1, repTTV);
         }
 
-        if (x < w && layer.templateData[y * w + (x + 1)] == repTTV) {
+        if (x < w && layer.templateData[y * w + (x + 1)] === repTTV) {
           doFill(x + 1, y, repTTV);
         }
 
-        if (y < h && layer.templateData[(y + 1) * w + x] == repTTV) {
+        if (y < h && layer.templateData[(y + 1) * w + x] === repTTV) {
           doFill(x, y + 1, repTTV);
         }
 

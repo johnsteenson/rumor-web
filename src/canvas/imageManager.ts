@@ -3,16 +3,16 @@ import { TileImage } from '@/canvas/tileImage';
 
 export class ImageManager {
   public static getInstance(): ImageManager {
-    if (!ImageManager._instance) {
-      ImageManager._instance = new ImageManager();
-      return ImageManager._instance;
+    if (!ImageManager.instance) {
+      ImageManager.instance = new ImageManager();
+      return ImageManager.instance;
     }
 
-    return ImageManager._instance;
+    return ImageManager.instance;
 
   }
 
-  private static _instance: ImageManager;
+  private static instance: ImageManager;
 
   private imageFiles: Map<String, HTMLImageElement> = new Map<String, HTMLImageElement>();
 
