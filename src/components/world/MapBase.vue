@@ -8,21 +8,33 @@
 import { ImageManager } from "@/canvas/imageManager";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { TileSize, Rect, Point } from "@/types/primitives";
-import { MapView, TileMap } from "../../types/map";
+import { MapView, TileMap, TileChange, TileChangeEntry } from "../../types/map";
 
 import { namespace } from "vuex-class";
 import { TileImage } from "../../canvas/tileImage";
-import { Tileset, TilesetSection, Tile } from "../../types/tileset";
+import {
+  Tileset,
+  TilesetSection,
+  Tile,
+  TilesetView
+} from "../../types/tileset";
 
 import * as resizeHandler from "@/lib/resizeHandler";
 import { unpackMapBuf } from "../../lib/world/tilemap";
 import { getFirstTile } from "../../lib/world/tileset";
 import { throttle } from "lodash";
+
+import CanvasBase from "./CanvasBase.vue";
+
+import mapStore from "@/store/map";
+
 const world = namespace("world");
 
 @Component
-export default class MapBase extends Vue {
-  @Prop() protected mapView!: MapView;
+export default class MapBase extends CanvasBase {
+  @Prop() protected tilesetView!: TilesetView;
+  @Prop() protected useMap!: TileMap;
+  @Prop() protected useMapStore!: boolean;
 
   protected canvas!: HTMLCanvasElement;
   protected context!: CanvasRenderingContext2D;
@@ -30,13 +42,11 @@ export default class MapBase extends Vue {
   protected tileset!: Tileset;
   protected tileSize!: TileSize;
   protected mapOffset!: Point;
+  protected mapViewport!: Rect;
+  protected visibleViewport!: Rect;
   protected map!: TileMap;
 
-  protected callResize: Function = throttle((w: number, h: number) => {
-    this.canvas.width = w;
-    this.canvas.height = h;
-  }, 300);
-
+  /*
   public mounted() {
     this.canvas = this.$el.getElementsByTagName(
       "canvas"
@@ -54,31 +64,69 @@ export default class MapBase extends Vue {
       this.$forceUpdate();
     });
   }
+*/
 
-  @Watch("mapView.tileset", { immediate: true, deep: true }) tilesetChange(
+  @Watch("tilesetView.tileset", { immediate: true, deep: true }) tilesetChange(
     tileset: Tileset
   ) {
     this.tileset = tileset;
     this.refreshTilesetImage();
+    this.refreshViewport();
   }
 
-  @Watch("mapView.tileSize", { immediate: true, deep: true }) tileSizeChange(
-    tileSize: TileSize
-  ) {
+  @Watch("tilesetView.tileSize", { immediate: true, deep: true })
+  tileSizeChange(tileSize: TileSize) {
     this.tileSize = tileSize;
     this.refreshTilesetImage();
+    this.refreshViewport();
   }
 
-  @Watch("mapView.map", { immediate: true, deep: true }) mapViewChange(
+  @Watch("useMap", { immediate: true, deep: false }) useMapChange(
     map: TileMap
   ) {
     this.map = map;
     this.drawMap();
+    this.refreshViewport();
+  }
+
+  @Watch("useMapStore", { immediate: true, deep: false }) useMapStoreChange(
+    useMapStore: boolean
+  ) {
+    if (useMapStore) {
+      this.$nextTick(() => {
+        mapStore.onMapChange((map: TileMap) => {
+          this.map = map;
+          this.drawMap();
+          this.refreshViewport();
+        });
+
+        mapStore.onMapUpdate((tileChange: TileChange) => {
+          this.drawTiles(tileChange);
+        });
+      });
+    }
   }
 
   protected refresh() {
     this.$nextTick(() => {
       this.$forceUpdate();
+    });
+  }
+
+  protected onResize() {
+    this.drawMap();
+  }
+
+  protected refreshViewport() {
+    if (!this.canvas || !this.map || !this.tileset || !this.tileSize) {
+      return;
+    }
+
+    this.setViewport({
+      l: 0,
+      r: this.map.w * this.tileSize.scaledW,
+      t: 0,
+      b: this.map.h * this.tileSize.scaledH
     });
   }
 
@@ -122,23 +170,41 @@ export default class MapBase extends Vue {
     };
 
     return {
-      x: offset.x > 0 ? offset.x : 0,
-      y: offset.y > 0 ? offset.y : 0
+      x: offset.x > 0 ? Math.floor(offset.x) : 0,
+      y: offset.y > 0 ? Math.floor(offset.y) : 0
     };
   }
 
-  public drawMap() {
+  public calculateTileDrawRect(map: TileMap, tileSize: TileSize): Rect {
+    const tileDrawRect: Rect = {
+      l: Math.floor(this.visibleViewport.l / this.tileSize.scaledW),
+      r: Math.ceil(this.visibleViewport.r / this.tileSize.scaledW),
+      t: Math.floor(this.visibleViewport.t / this.tileSize.scaledH),
+      b: Math.ceil(this.visibleViewport.b / this.tileSize.scaledH)
+    };
+
+    if (tileDrawRect.r > map.w) {
+      tileDrawRect.r = map.w;
+    }
+    if (tileDrawRect.b > map.h) {
+      tileDrawRect.b = map.h;
+    }
+
+    return tileDrawRect;
+  }
+
+  public drawTiles(tileChange: TileChange) {
     if (!this.map || !this.image || !this.tileSize) {
       return;
     }
 
+    // window.requestAnimationFrame(() => {
     const map = this.map,
       tileSize = this.tileSize;
 
     this.mapOffset = this.calculateCenterCoorOffset();
 
-    let x: number = 0,
-      y: number = 0,
+    let tileDrawRect: Rect = this.calculateTileDrawRect(map, tileSize),
       k: number = 0,
       sx: number = this.mapOffset.x,
       sy: number = this.mapOffset.y,
@@ -148,45 +214,118 @@ export default class MapBase extends Vue {
       sectionNum: number,
       tile: Tile;
 
-    for (y = 0; y < map.h; y++) {
-      for (x = 0; x < map.w; x++) {
-        mapBuf = map.layer[0].visibleData[y * map.w + x];
-        mapVal = unpackMapBuf(mapBuf);
+    for (const entry of tileChange.entries) {
+      if (
+        entry.x < tileDrawRect.l ||
+        entry.x > tileDrawRect.r ||
+        entry.y < tileDrawRect.t ||
+        entry.y > tileDrawRect.b
+      ) {
+        continue;
+      }
 
-        tile = this.tileset.sections[mapVal[0]].tiles[mapVal[1]];
+      mapBuf = map.layer[0].visibleData[entry.y * map.w + entry.x];
+      mapVal = unpackMapBuf(mapBuf);
 
-        if (Array.isArray(tile.t)) {
-          const len: number = tile.flen || tile.t.length;
-          let quarter: number = tile.quarter || 255;
+      tile = this.tileset.sections[mapVal[0]].tiles[mapVal[1]];
 
-          for (k = 0; k < len; k++) {
-            this.image[mapVal[0]].drawSubTiles(
+      const x = entry.x - tileDrawRect.l,
+        y = entry.y - tileDrawRect.t;
+
+      if (Array.isArray(tile.t)) {
+        const len: number = tile.flen || tile.t.length;
+        let quarter: number = tile.quarter || 255;
+
+        for (k = 0; k < len; k++) {
+          this.image[mapVal[0]].drawSubTiles(
+            this.context,
+            this.mapOffset.x + x * tileSize.scaledW,
+            this.mapOffset.y + y * tileSize.scaledH,
+            tile.t[k],
+            quarter
+          );
+          quarter = quarter >> 4;
+        }
+      } else {
+        this.image[mapVal[0]].drawTile(
+          this.context,
+          this.mapOffset.x + x * tileSize.scaledW,
+          this.mapOffset.y + y * tileSize.scaledH,
+          tile.t as number
+        );
+        // this.image!.drawTile(this.context, sx, sy, tile.t as number);
+      }
+    }
+
+    this.drawScrollbars();
+    // });
+  }
+
+  public drawMap() {
+    if (!this.map || !this.image || !this.tileSize) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      const map = this.map,
+        tileSize = this.tileSize;
+
+      this.mapOffset = this.calculateCenterCoorOffset();
+
+      let x: number = 0,
+        y: number = 0,
+        tileDrawRect: Rect = this.calculateTileDrawRect(map, tileSize),
+        k: number = 0,
+        sx: number = this.mapOffset.x,
+        sy: number = this.mapOffset.y,
+        mapBuf: number,
+        mapVal: number[],
+        tileIndex: number,
+        sectionNum: number,
+        tile: Tile;
+
+      for (y = tileDrawRect.t; y < tileDrawRect.b; y++) {
+        for (x = tileDrawRect.l; x < tileDrawRect.r; x++) {
+          mapBuf = map.layer[0].visibleData[y * map.w + x];
+          mapVal = unpackMapBuf(mapBuf);
+
+          tile = this.tileset.sections[mapVal[0]].tiles[mapVal[1]];
+
+          if (Array.isArray(tile.t)) {
+            const len: number = tile.flen || tile.t.length;
+            let quarter: number = tile.quarter || 255;
+
+            for (k = 0; k < len; k++) {
+              this.image[mapVal[0]].drawSubTiles(
+                this.context,
+                sx,
+                sy,
+                tile.t[k],
+                quarter
+              );
+              quarter = quarter >> 4;
+            }
+          } else {
+            this.image[mapVal[0]].drawTile(
               this.context,
               sx,
               sy,
-              tile.t[k],
-              quarter
+              tile.t as number
             );
-            quarter = quarter >> 4;
+            // this.image!.drawTile(this.context, sx, sy, tile.t as number);
           }
-        } else {
-          this.image[mapVal[0]].drawTile(
-            this.context,
-            sx,
-            sy,
-            tile.t as number
-          );
-          // this.image!.drawTile(this.context, sx, sy, tile.t as number);
+
+          //tileIndex = getFirstTile(this.tileset.sections[0].tiles[mapVal[1]].t);
+
+          //this.image[ mapVal[0] ].drawTile(this.context, sx, sy, tileIndex);
+          sx = sx + tileSize.scaledW;
         }
-
-        //tileIndex = getFirstTile(this.tileset.sections[0].tiles[mapVal[1]].t);
-
-        //this.image[ mapVal[0] ].drawTile(this.context, sx, sy, tileIndex);
-        sx = sx + tileSize.scaledW;
+        sx = this.mapOffset.x;
+        sy = sy + tileSize.scaledH;
       }
-      sx = this.mapOffset.x;
-      sy = sy + tileSize.scaledH;
-    }
+
+      this.drawScrollbars();
+    });
   }
 }
 </script>
@@ -197,9 +336,9 @@ canvas {
 }
 
 div.map-base {
-  width: 100%;
+  width: 90%;
   height: 100%;
-  max-width: 100%;
+  max-width: 90%;
   max-height: 100%;
   min-width: 100%;
   min-height: 100%;

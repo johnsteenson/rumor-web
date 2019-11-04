@@ -30,4 +30,15 @@ export interface Rect {
   l: number;
 }
 
+export interface ScrollRect {
+  innerL: number;
+  innerR: number;
+  outerL: number;
+  outerR: number;
+  innerT: number;
+  innerB: number;
+  outerT: number;
+  outerB: number;
+};
+
 export type Nullable<T> = T | null;

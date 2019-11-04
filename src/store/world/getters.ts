@@ -35,6 +35,7 @@ export const getters: GetterTree<WorldState, RootState> = {
     return tilesetView;
   },
 
+  /*
   getMapView(state: WorldState): Nullable<MapView> {
     if (!state.map) {
       return null;
@@ -61,5 +62,6 @@ export const getters: GetterTree<WorldState, RootState> = {
 
     return mapView;
   },
+  */
 
 };

@@ -11,10 +11,8 @@ import { createMap } from '@/lib/world/tilemap';
 import { Tileset } from '@/types/tileset';
 
 const namespaced: boolean = true,
-  map: TileMap = createMap('My Kewl Map', 20, 15),
   sourceTileset: Tileset = tileset as Tileset,
   state: WorldState = {
-    map,
     tool: ToolType.PENCIL,
     tileSelection: {
       tileIndices: [0],

@@ -137,7 +137,7 @@ export function getWaterTileIndex(layer: MapLayer, tileset: Tileset, x: number, 
 }
 
 export function calculateTileValue(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number,
-  templateTileValue: number) {
+  templateTileValue: number): number {
   const templateTile = tilemap.getTemplateTile(templateTileValue, tileset),
     sectionId = tilemap.unpackMapBuf(templateTileValue)[0];
 
@@ -154,8 +154,10 @@ export function calculateTileValue(layer: MapLayer, tileset: Tileset, x: number,
     case TemplateTileType.WATER:
       tileIndex = getWaterTileIndex(layer, tileset, x, y, w, h, templateTileValue);
       return Array.isArray(templateTile.tile) ? templateTile.tile[tileIndex] : 0;
-  }
 
+    case TemplateTileType.DEEP_WATER:
+      return -1;
+  }
 }
 
 export function visitSurroundingTiles(x: number, y: number, w: number, h: number, mapW: number, mapH: number,

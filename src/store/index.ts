@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Vuex, {StoreOptions} from 'vuex';
+import Vuex, { StoreOptions } from 'vuex';
 import { projectModule } from './project/index';
 import { worldModule } from './world/index';
 import { RootState } from './types';

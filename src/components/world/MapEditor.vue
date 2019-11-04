@@ -26,19 +26,20 @@ import MapBase from "./MapBase.vue";
 
 import { namespace } from "vuex-class";
 
+import mapStore from "@/store/map";
+
+import { MapMutator } from "@/store/map/mutations";
+
 const world = namespace("world");
 
 @Component
 export default class MapEditor extends MapBase {
-  @world.Action("newTileChange") newTileChange: any;
-  @world.Action("pencil") pencil: any;
-  @world.Action("fill") fill: any;
-  @world.Action("undo") undo: any;
-
   private baseCoor!: Rect;
   private lastDrawCoor!: Point;
 
   private isMouseDown!: boolean;
+
+  private mutator: MapMutator = mapStore.mapMutator;
 
   private created() {
     this.baseCoor = {} as Rect;
@@ -46,21 +47,23 @@ export default class MapEditor extends MapBase {
     this.isMouseDown = false;
   }
 
-  public drawSelectedTiles(clientX: number, clientY: number) {
+  public async drawSelectedTiles(clientX: number, clientY: number) {
     const boundingRect = this.canvas.getBoundingClientRect(),
       xScale = (boundingRect.right - boundingRect.left) / this.canvas.width,
-      yScale = (boundingRect.bottom - boundingRect.top) / this.canvas.height;
+      yScale = (boundingRect.bottom - boundingRect.top) / this.canvas.height,
+      map = this.map,
+      tileDrawRect = this.calculateTileDrawRect(map, this.tileSize);
 
     this.baseCoor.l = clientX - boundingRect.left - this.mapOffset.x;
     this.baseCoor.t = clientY - boundingRect.top - this.mapOffset.y;
     this.baseCoor.r = 0;
     this.baseCoor.b = 0;
 
-    const map = this.map,
-      x = Math.floor(this.baseCoor.l / this.tileSize.scaledW),
-      y = Math.floor(this.baseCoor.t / this.tileSize.scaledH),
-      section = this.mapView.tileset.sections[this.mapView.curSection],
-      tileIndex = this.mapView.tileSelection.tileIndices[0],
+    const x =
+        Math.floor(this.baseCoor.l / this.tileSize.scaledW) + tileDrawRect.l,
+      y = Math.floor(this.baseCoor.t / this.tileSize.scaledH) + tileDrawRect.t,
+      section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
+      tileIndex = this.tilesetView.tileSelection.tileIndices[0],
       templateTile = section.templateTiles[tileIndex],
       tile = section.tiles[tileIndex].t,
       tileDisplayIndex = Array.isArray(tile) ? tile[0] : tile;
@@ -80,20 +83,20 @@ export default class MapEditor extends MapBase {
       l: 0,
       data: [
         {
-          s: this.mapView.curSection,
+          s: this.tilesetView.curSection,
           t: tileIndex
         }
       ]
     };
 
-    switch (this.mapView.tool) {
+    switch (this.tilesetView.tool) {
       case ToolType.PENCIL:
-        this.pencil(tileDraw);
+        this.mutator.pencil(tileDraw);
         break;
 
       case ToolType.FILL:
         this.isMouseDown = false;
-        this.fill(tileDraw);
+        this.mutator.fill(tileDraw);
         break;
     }
   }
@@ -101,14 +104,18 @@ export default class MapEditor extends MapBase {
   public mouseDown(event: MouseEvent) {
     switch (event.button) {
       case 0:
-        this.isMouseDown = true;
+        if (this.clickScrollbars(event.clientX, event.clientY)) {
+          this.drawMap();
+          return;
+        }
 
-        this.newTileChange();
+        this.isMouseDown = true;
+        this.mutator.newChange();
         this.drawSelectedTiles(event.clientX, event.clientY);
         break;
 
       case 2:
-        this.undo();
+        this.mutator.undo();
 
         break;
     }
@@ -124,6 +131,13 @@ export default class MapEditor extends MapBase {
 
   public mouseMove(event: MouseEvent) {
     if (this.isMouseDown) {
+      /*
+      console.log(
+        `Mouse has moved to ${event.clientX},${
+          event.clientY
+        } at ${performance.now()}`
+      );
+      */
       this.drawSelectedTiles(event.clientX, event.clientY);
     }
   }

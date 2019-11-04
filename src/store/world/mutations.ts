@@ -15,6 +15,7 @@ export const mutations: MutationTree<WorldState> = {
     });
   },
 
+  /*
   // Convert this to process an array instead of a single TileChangeEntry
   changeTile(state, change: TileChangeEntry) {
     if (state.changes.length < 1) {
@@ -52,6 +53,7 @@ export const mutations: MutationTree<WorldState> = {
 
     state.map.lastUpdated = new Date();
   },
+  */
 
   setTool(state, toolId: number) {
     state.tool = toolId;

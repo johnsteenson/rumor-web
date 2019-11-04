@@ -7,7 +7,7 @@
       </div>
 
       <div class="world-map-editor">
-        <MapEditor :mapView="mapView"></MapEditor>
+        <MapEditor :useMapStore="true" :tilesetView="tilesetView"></MapEditor>
       </div>
     </div>
   </div>
@@ -45,8 +45,6 @@ export default class World extends Vue {
 
   @world.Getter("getTilesetView") tilesetView!: TilesetView;
 
-  @world.Getter("getMapView") mapView!: MapView;
-
   @world.Mutation("selectTileIndices") selectTileIndices: any;
 
   tileSelected(selectedTileIndices: number[]) {
@@ -70,6 +68,7 @@ div.container {
   min-height: 0;
   min-width: 0;
   max-height: 100%;
+  margin: 0 4px 0 2px;
 }
 
 .world-tile-selector {
