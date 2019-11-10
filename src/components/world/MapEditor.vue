@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { Component, Prop, Vue, Watch, Inject } from "vue-property-decorator";
 import { TileSize, Rect, Point } from "@/types/primitives";
 import {
   MapView,
@@ -22,13 +22,9 @@ import {
   TileDraw
 } from "../../types/map";
 
-import MapBase from "./MapBase.vue";
-
 import { namespace } from "vuex-class";
 
-import mapStore from "@/store/map";
-
-import { MapMutator } from "@/store/map/mutations";
+import MapBase from "./MapBase.vue";
 
 const world = namespace("world");
 
@@ -39,12 +35,23 @@ export default class MapEditor extends MapBase {
 
   private isMouseDown!: boolean;
 
-  private mutator: MapMutator = mapStore.mapMutator;
-
   private created() {
     this.baseCoor = {} as Rect;
     this.lastDrawCoor = { x: -1, y: -1 };
     this.isMouseDown = false;
+  }
+
+  private applyDraw(tileDraw: TileDraw) {
+    switch (this.tilesetView.tool) {
+      case ToolType.PENCIL:
+        this.mapStore.mapMutator.pencil(tileDraw);
+        break;
+
+      case ToolType.FILL:
+        this.isMouseDown = false;
+        this.mapStore.mapMutator.fill(tileDraw);
+        break;
+    }
   }
 
   public async drawSelectedTiles(clientX: number, clientY: number) {
@@ -72,10 +79,54 @@ export default class MapEditor extends MapBase {
       return;
     }
 
+    if (this.lastDrawCoor.x > -1 && Math.abs(this.lastDrawCoor.x - x) > 1) {
+      for (
+        let fx = Math.min(this.lastDrawCoor.x, x);
+        fx < Math.max(this.lastDrawCoor.x, x);
+        fx++
+      ) {
+        this.applyDraw({
+          x: fx,
+          y,
+          w: 1,
+          h: 1,
+          l: 0,
+          data: [
+            {
+              s: this.tilesetView.curSection,
+              t: tileIndex
+            }
+          ]
+        });
+      }
+    }
+
+    if (this.lastDrawCoor.y > -1 && Math.abs(this.lastDrawCoor.y - y) > 1) {
+      for (
+        let fy = Math.min(this.lastDrawCoor.y, y);
+        fy < Math.max(this.lastDrawCoor.y, y);
+        fy++
+      ) {
+        this.applyDraw({
+          x,
+          y: fy,
+          w: 1,
+          h: 1,
+          l: 0,
+          data: [
+            {
+              s: this.tilesetView.curSection,
+              t: tileIndex
+            }
+          ]
+        });
+      }
+    }
+
     this.lastDrawCoor.x = x;
     this.lastDrawCoor.y = y;
 
-    const tileDraw: TileDraw = {
+    this.applyDraw({
       x,
       y,
       w: 1,
@@ -87,18 +138,7 @@ export default class MapEditor extends MapBase {
           t: tileIndex
         }
       ]
-    };
-
-    switch (this.tilesetView.tool) {
-      case ToolType.PENCIL:
-        this.mutator.pencil(tileDraw);
-        break;
-
-      case ToolType.FILL:
-        this.isMouseDown = false;
-        this.mutator.fill(tileDraw);
-        break;
-    }
+    });
   }
 
   public mouseDown(event: MouseEvent) {
@@ -110,12 +150,12 @@ export default class MapEditor extends MapBase {
         }
 
         this.isMouseDown = true;
-        this.mutator.newChange();
+        this.mapStore.mapMutator.newChange();
         this.drawSelectedTiles(event.clientX, event.clientY);
         break;
 
       case 2:
-        this.mutator.undo();
+        this.mapStore.mapMutator.undo();
 
         break;
     }

@@ -24,6 +24,7 @@ export interface TileMap {
   h: number;
   buffer: ArrayBuffer;
   layer: MapLayer[];
+  tileset: Tileset;
   lastUpdated: Date;
 }
 

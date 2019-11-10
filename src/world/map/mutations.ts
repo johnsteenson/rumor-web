@@ -4,10 +4,7 @@ import { Point } from '@/types/primitives';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { TemplateTileType } from '@/types/tileset';
 
-import { worldModule } from '@/store/world';
-import { WorldState } from '../world/types';
-
-const state: WorldState = worldModule.state as WorldState;
+const MAX_ITERATIONS = 25000;
 
 export class MapMutator {
   private map!: TileMap;
@@ -33,13 +30,13 @@ export class MapMutator {
       const layer = this.map.layer[point.l!],
         templateTileValue = layer.templateData[point.y * w + point.x],
         unpackedVal = unpackMapBuf(templateTileValue),
-        templateTile = state.tileset.sections[unpackedVal[0]].templateTiles[unpackedVal[1]];
+        templateTile = this.map.tileset.sections[unpackedVal[0]].templateTiles[unpackedVal[1]];
 
       if (templateTile.type === TemplateTileType.SINGLE) {
         continue;
       }
 
-      tileValue = calculateTileValue(layer, state.tileset, point.x, point.y, w, h, templateTileValue);
+      tileValue = calculateTileValue(layer, this.map.tileset, point.x, point.y, w, h, templateTileValue);
       changeList.push({
         x: point.x,
         y: point.y,
@@ -82,17 +79,18 @@ export class MapMutator {
   public pencil(tileDraw: TileDraw) {
     const w = this.map.w,
       h = this.map.h,
-      surroundingTiles: Point[] = [];
+      surroundingTiles: Point[] = [],
+      changeListStart = this.changes[this.changes.length - 1].entries.length;
 
     for (const drawData of tileDraw.data) {
       const layer = this.map.layer[tileDraw.l];
-      const section = state.tileset.sections[drawData.s];
+      const section = this.map.tileset.sections[drawData.s];
       const templateTile = section.templateTiles[drawData.t];
       const templateTileValue = packMapBuf(drawData.s, drawData.t);
 
       let tileValue;
 
-      tileValue = calculateTileValue(layer, state.tileset, tileDraw.x, tileDraw.y, w, h, templateTileValue);
+      tileValue = calculateTileValue(layer, this.map.tileset, tileDraw.x, tileDraw.y, w, h, templateTileValue);
       this.applyTileChanges([{
         x: tileDraw.x,
         y: tileDraw.y,
@@ -115,63 +113,96 @@ export class MapMutator {
       this.correctSurroundingAutotiles(surroundingTiles);
     }
 
-    this.mapUpdate(this.changes[this.changes.length - 1]);
+    this.mapUpdate(this.changes[this.changes.length - 1].entries.slice(changeListStart));
   }
 
   public fill(tileDraw: TileDraw) {
     const w = this.map.w,
-      h = this.map.h;
+      h = this.map.h,
+      changeListStart = this.changes[this.changes.length - 1].entries.length;
 
     for (const drawData of tileDraw.data) {
       const layer = this.map.layer[tileDraw.l];
-      const section = state.tileset.sections[drawData.s];
+      const section = this.map.tileset.sections[drawData.s];
       const templateTile = section.templateTiles[drawData.t];
       const templateTileValue = packMapBuf(drawData.s, drawData.t);
 
       const doFill = (x: number, y: number, repTTV: number) => {
-        const tileValue = calculateTileValue(layer, state.tileset, x, y, w, h, templateTileValue);
-        const surroundingTiles: Point[] = [];
-        this.applyTileChanges([{
+        if (repTTV === templateTileValue) {
+          return;
+        }
+
+        const stack: Point[] = [{
           x,
-          y,
-          l: tileDraw.l,
-          t: templateTileValue,
-          v: tileValue,
-          pv: 0,
-          pt: 0
-        }]);
+          y
+        }];
+        let count = 0;
 
-        if (x > 0 && layer.templateData[y * w + (x - 1)] === repTTV) {
-          doFill(x - 1, y, repTTV);
+        while (stack.length > 0 && count < MAX_ITERATIONS) {
+          const pt = stack.pop(),
+            surroundingTiles: Point[] = [];
+
+          count++;
+
+          if (pt == null) {
+            break;
+          }
+
+          if (layer.templateData[pt.y * w + pt.x] !== repTTV) {
+            continue;
+          }
+
+          let pw = pt.x, scanUp = true, scanDown = true;
+          while (pw > 0 && layer.templateData[pt.y * w + (pw - 1)] === repTTV) {
+            pw--;
+          }
+
+          while (pw < w && layer.templateData[pt.y * w + pw] === repTTV) {
+            const tileValue = calculateTileValue(layer, this.map.tileset, pt.x, pt.y, w, h, templateTileValue);
+
+            this.applyTileChanges([{
+              x: pw,
+              y: pt.y,
+              l: tileDraw.l,
+              t: templateTileValue,
+              v: tileValue,
+              pv: 0,
+              pt: 0
+            }]);
+
+            visitSurroundingTiles(pw, pt.y, 1, 1, w, h, (px: number, py: number) => {
+              surroundingTiles.push({
+                x: px,
+                y: py,
+                l: tileDraw.l
+              });
+            });
+
+            if (pt.y > 0) {
+              if (scanUp && layer.templateData[(pt.y - 1) * w + pw] === repTTV) {
+                stack.push({ x: pw, y: pt.y - 1 });
+              }
+              scanUp = layer.templateData[(pt.y - 1) * w + pw] !== repTTV
+            }
+
+            if (pt.y < h) {
+              if (scanDown && layer.templateData[(pt.y + 1) * w + pw] === repTTV) {
+                stack.push({ x: pw, y: pt.y + 1 })
+              }
+              scanDown = layer.templateData[(pt.y + 1) * w + pw] !== repTTV;
+            }
+
+            pw++;
+          }
+
+          this.correctSurroundingAutotiles(surroundingTiles)
         }
-
-        if (y > 0 && layer.templateData[(y - 1) * w + x] === repTTV) {
-          doFill(x, y - 1, repTTV);
-        }
-
-        if (x < w && layer.templateData[y * w + (x + 1)] === repTTV) {
-          doFill(x + 1, y, repTTV);
-        }
-
-        if (y < h && layer.templateData[(y + 1) * w + x] === repTTV) {
-          doFill(x, y + 1, repTTV);
-        }
-
-        visitSurroundingTiles(x, y, 1, 1, w, h, (px: number, py: number) => {
-          surroundingTiles.push({
-            x: px,
-            y: py,
-            l: tileDraw.l
-          });
-        });
-
-        this.correctSurroundingAutotiles(surroundingTiles);
-      };
+      }
 
       doFill(tileDraw.x, tileDraw.y, layer.templateData[tileDraw.y * w + tileDraw.x]);
     }
 
-    this.mapUpdate(this.changes[this.changes.length - 1]);
+    this.mapUpdate();
   }
 
   public undo() {

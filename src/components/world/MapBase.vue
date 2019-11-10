@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { ImageManager } from "@/canvas/imageManager";
-import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { Component, Prop, Vue, Watch, Inject } from "vue-property-decorator";
 import { TileSize, Rect, Point } from "@/types/primitives";
 import { MapView, TileMap, TileChange, TileChangeEntry } from "../../types/map";
 
@@ -26,7 +26,7 @@ import { throttle } from "lodash";
 
 import CanvasBase from "./CanvasBase.vue";
 
-import mapStore from "@/store/map";
+import { MapStore } from "@/world/map";
 
 const world = namespace("world");
 
@@ -35,6 +35,8 @@ export default class MapBase extends CanvasBase {
   @Prop() protected tilesetView!: TilesetView;
   @Prop() protected useMap!: TileMap;
   @Prop() protected useMapStore!: boolean;
+
+  @Inject("mapStore") protected mapStore!: MapStore;
 
   protected canvas!: HTMLCanvasElement;
   protected context!: CanvasRenderingContext2D;
@@ -94,14 +96,18 @@ export default class MapBase extends CanvasBase {
   ) {
     if (useMapStore) {
       this.$nextTick(() => {
-        mapStore.onMapChange((map: TileMap) => {
+        this.mapStore.onMapChange((map: TileMap) => {
           this.map = map;
           this.drawMap();
           this.refreshViewport();
         });
 
-        mapStore.onMapUpdate((tileChange: TileChange) => {
-          this.drawTiles(tileChange);
+        this.mapStore.onMapUpdate((tileChange?: TileChangeEntry[]) => {
+          if (tileChange) {
+            this.drawTiles(tileChange);
+          } else {
+            this.drawMap();
+          }
         });
       });
     }
@@ -193,12 +199,11 @@ export default class MapBase extends CanvasBase {
     return tileDrawRect;
   }
 
-  public drawTiles(tileChange: TileChange) {
+  public drawTiles(tileChanges: TileChangeEntry[]) {
     if (!this.map || !this.image || !this.tileSize) {
       return;
     }
 
-    // window.requestAnimationFrame(() => {
     const map = this.map,
       tileSize = this.tileSize;
 
@@ -214,7 +219,7 @@ export default class MapBase extends CanvasBase {
       sectionNum: number,
       tile: Tile;
 
-    for (const entry of tileChange.entries) {
+    for (const entry of tileChanges) {
       if (
         entry.x < tileDrawRect.l ||
         entry.x > tileDrawRect.r ||

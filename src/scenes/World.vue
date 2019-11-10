@@ -21,7 +21,7 @@
     </div>
 */
 
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue, Provide } from "vue-property-decorator";
 import { Getter, namespace } from "vuex-class";
 import MapEditor from "@/components/world/MapEditor.vue";
 import TilePalette from "@/components/world/TilePalette.vue";
@@ -29,6 +29,8 @@ import TileDebug from "@/components/world/TileDebug.vue";
 import TileToolbar from "@/components/world/TileToolbar.vue";
 import { Tileset, TilesetView } from "@/types/tileset";
 import { MapView } from "../types/map";
+
+import { mapStore } from "@/world";
 
 const world = namespace("world");
 
@@ -46,6 +48,8 @@ export default class World extends Vue {
   @world.Getter("getTilesetView") tilesetView!: TilesetView;
 
   @world.Mutation("selectTileIndices") selectTileIndices: any;
+
+  @Provide("mapStore") store = mapStore;
 
   tileSelected(selectedTileIndices: number[]) {
     this.selectTileIndices(selectedTileIndices);

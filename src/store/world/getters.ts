@@ -6,20 +6,13 @@ import { Tileset, TilesetView } from '@/types/tileset';
 import { Nullable, TileSize } from '@/types/primitives';
 import { MapView, ToolType } from '@/types/map';
 
+import { mapStore } from '@/world';
+
 export const getters: GetterTree<WorldState, RootState> = {
-  getTileset(state: WorldState): Tileset {
-    return state.tileset;
-  },
-
   getTilesetView(state: WorldState): Nullable<TilesetView> {
-    if (!state.tileset) {
-      return null;
-    }
-
-    const { w, h } = state.tileset.tileSize,
+    const { w, h } = mapStore.map.tileset.tileSize,
       scale = state.componentScale,
       tilesetView: TilesetView = {
-        tileset: state.tileset,
         tileSize: {
           w,
           h,
@@ -28,6 +21,7 @@ export const getters: GetterTree<WorldState, RootState> = {
           scaledH: h * scale,
         },
         tool: state.tool,
+        tileset: mapStore.map.tileset,
         tileSelection: state.tileSelection,
         curSection: state.curSection,
       };

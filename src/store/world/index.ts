@@ -5,13 +5,11 @@ import { mutations } from './mutations';
 import { WorldState } from './types';
 import { RootState } from '../types';
 import { TileMap, MapLayer, ToolType, TileChange } from '@/types/map';
-import tileset from '@/data/tileset-world.json';
 import { createMap } from '@/lib/world/tilemap';
 // import { mapTileset } from '@/lib/tilesetUtils';
 import { Tileset } from '@/types/tileset';
 
 const namespaced: boolean = true,
-  sourceTileset: Tileset = tileset as Tileset,
   state: WorldState = {
     tool: ToolType.PENCIL,
     tileSelection: {
@@ -20,7 +18,6 @@ const namespaced: boolean = true,
       h: 1,
     },
     curSection: 0,
-    tileset: sourceTileset,
     mapScale: 2,
     componentScale: 2,
     changes: [],

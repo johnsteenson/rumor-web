@@ -1,9 +1,8 @@
 import { TileMap, TileChange } from '@/types/map';
 
 import { MapMutator } from './mutations';
-import { createMap } from '@/lib/world/tilemap';
 
-class MapStore {
+export class MapStore {
 
   private _mapMutator: MapMutator;
 
@@ -47,7 +46,3 @@ class MapStore {
     this.onMapUpdateCallback = callback;
   }
 };
-
-const mapStore = new MapStore();
-mapStore.map = createMap('My Kewl Map', 100, 100);
-export default mapStore;

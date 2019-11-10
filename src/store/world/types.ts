@@ -5,7 +5,6 @@ import { Tileset, Tile } from '@/types/tileset';
 export interface WorldState {
   tool: ToolType;
   tileSelection: TileSelection;
-  tileset: Tileset;
   curSection: number;
   mapScale: number;
   componentScale: number;

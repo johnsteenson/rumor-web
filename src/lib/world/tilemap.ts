@@ -26,7 +26,7 @@ function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBu
   return layers;
 }
 
-export function createMap(title: string, w: number, h: number) {
+export function createMap(title: string, w: number, h: number, tileset: Tileset) {
   const buffer = new ArrayBuffer(w * h * LAYERS * MAP_BYTE_SIZE * 2),
     layer = createLayers(w, h, LAYERS, buffer);
 
@@ -35,6 +35,7 @@ export function createMap(title: string, w: number, h: number) {
     w,
     h,
     buffer,
+    tileset,
     layer,
     lastUpdated: new Date()
   };
