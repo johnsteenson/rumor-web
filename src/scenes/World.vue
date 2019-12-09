@@ -1,10 +1,14 @@
 <template>
   <div class="world">
     <div class="container">
-      <div class="world-tile-selector">
+      <div class="world-tile-toolbar">
         <TileToolbar />
-        <TilePalette :tilesetView="tilesetView" @tile-selected="tileSelected"></TilePalette>
       </div>
+      <div class="world-tile-selector">
+        <TilePalette :tilesetView="tilesetView" @tile-selected="tileSelected" :hideHScroll="true"></TilePalette>
+      </div>
+
+      <div class="world-map-selector">Map Selector goes here</div>
 
       <div class="world-map-editor">
         <MapEditor :useMapStore="true" :tilesetView="tilesetView"></MapEditor>
@@ -18,7 +22,7 @@
     <div style="width: 100%; height: 600px; overflow: scroll">
       <TileDebug :tilesetView="tilesetView" :disableCanvasResize="true">
       </TileDebug>
-    </div>
+    </div>         
 */
 
 import { Component, Prop, Vue, Provide } from "vue-property-decorator";
@@ -59,7 +63,6 @@ export default class World extends Vue {
 
 <style scoped>
 div.world {
-  position: relative;
   width: 100%;
   height: 100%;
 }
@@ -67,21 +70,29 @@ div.world {
 div.container {
   display: grid;
   grid-template-columns: 2fr minmax(0, 10fr);
-  grid-template-rows: minmax(0, max-content);
-  height: 100%;
-  min-height: 0;
+  grid-template-rows: min-content 8fr 2fr;
   min-width: 0;
-  max-height: 100%;
+  height: 100%;
   margin: 0 4px 0 2px;
+  grid-template-areas:
+    "tiletoolbar mapeditor"
+    "tileselector mapeditor"
+    "mapselector mapeditor";
 }
 
 .world-tile-selector {
-  grid-column-start: 1;
-  grid-column-end: 2;
+  grid-area: tileselector;
+}
+
+.world-tile-toolbar {
+  grid-area: tiletoolbar;
 }
 
 .world-map-editor {
-  grid-column-start: 2;
-  grid-column-end: 3;
+  grid-area: mapeditor;
+}
+
+.world-map-selector {
+  grid-area: mapselector;
 }
 </style>

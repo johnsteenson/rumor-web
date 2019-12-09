@@ -18,6 +18,19 @@ module.exports = {
     }
   },
   */
+  chainWebpack: (config) => {
+    config.plugin('define').tap((definitions) => {
+      const date = new Date();
+      definitions[0] = Object.assign(definitions[0], {
+        'process.env': {
+          'BUILD_DATE': JSON.stringify(date.toString())
+        }
+      });
+
+      return definitions;
+    })
+  },
+
   productionSourceMap: false,
   lintOnSave: false,
 }

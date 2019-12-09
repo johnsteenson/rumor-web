@@ -183,10 +183,10 @@ export default class MapBase extends CanvasBase {
 
   public calculateTileDrawRect(map: TileMap, tileSize: TileSize): Rect {
     const tileDrawRect: Rect = {
-      l: Math.floor(this.visibleViewport.l / this.tileSize.scaledW),
-      r: Math.ceil(this.visibleViewport.r / this.tileSize.scaledW),
-      t: Math.floor(this.visibleViewport.t / this.tileSize.scaledH),
-      b: Math.ceil(this.visibleViewport.b / this.tileSize.scaledH)
+      l: Math.floor(this.scrollRect.innerL / this.tileSize.scaledW),
+      r: Math.ceil(this.scrollRect.innerR / this.tileSize.scaledW),
+      t: Math.floor(this.scrollRect.innerT / this.tileSize.scaledH),
+      b: Math.ceil(this.scrollRect.innerB / this.tileSize.scaledH)
     };
 
     if (tileDrawRect.r > map.w) {
@@ -262,7 +262,7 @@ export default class MapBase extends CanvasBase {
       }
     }
 
-    this.drawScrollbars();
+    // this.drawScrollbars();
     // });
   }
 
@@ -329,27 +329,11 @@ export default class MapBase extends CanvasBase {
         sy = sy + tileSize.scaledH;
       }
 
-      this.drawScrollbars();
+      // this.drawScrollbars();
     });
   }
 }
 </script>
 
 <style scoped="false">
-canvas {
-  position: absolute;
-}
-
-div.map-base {
-  width: 90%;
-  height: 100%;
-  max-width: 90%;
-  max-height: 100%;
-  min-width: 100%;
-  min-height: 100%;
-
-  border: 1;
-  border-style: groove solid;
-  background: linear-gradient(#333, #555);
-}
 </style>

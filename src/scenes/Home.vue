@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <div>
-      <Card title="Rumor">
+  <div class="home">
+    <div class="home-cell-1">
+      <Card title="Welcome">
         <p>
           Welcome to Rumor--the web-based RPG creation platform. Create your dream 2D RPG with your friends.
           Only your imagination is the limit!
@@ -32,11 +32,15 @@
             <b>Lore</b> - Craft the characters, monsters, and items. (Coming Soon)
           </li>
         </ul>
+        <p>
+          This app was last updated on
+          <b>{{buildDate}}</b>
+        </p>
       </Card>
     </div>
 
-    <div>
-      <UpdateList />
+    <div class="home-cell-2">
+      <Links />
     </div>
   </div>
 </template>
@@ -44,31 +48,62 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import Card from "@/components/ui/Card.vue";
-import UpdateList from "@/components/home/UpdateList.vue";
+import Links from "@/components/home/Links.vue";
 import SideBar from "@/components/home/SideBar.vue";
+
+declare var process: {
+  env: {
+    BUILD_DATE: String;
+  };
+};
 
 @Component({
   components: {
     Card,
-    UpdateList,
+    Links,
     SideBar
   }
 })
-export default class Home extends Vue {}
+export default class Home extends Vue {
+  private buildDate: String = process.env.BUILD_DATE;
+}
 </script>
 
 <style>
 .home {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min-content, 1fr));
+  grid-gap: 20px;
+  padding: 15px 40px 10px 35px;
+  grid-auto-flow: row;
 }
 
-.home-cell-1 {
-  flex-grow: 1;
+@media (min-width: 800px) {
+  .home-cell-1 {
+    grid-column-start: 1;
+    grid-column-end: 5;
+  }
+
+  .home-cell-2 {
+    grid-column-start: 5;
+    grid-column-end: 6;
+  }
 }
 
-.home-cell-2 {
-  flex-grow: 1;
+@media (max-width: 800px) {
+  .home-cell-1 {
+    grid-column-start: 1;
+    grid-column-end: 5;
+    grid-row-start: 1;
+    grid-row-end: 2;
+  }
+
+  .home-cell-2 {
+    grid-column-start: 1;
+    grid-column-end: 5;
+    grid-row-start: 2;
+    grid-row-end: 3;
+  }
 }
 
 a {

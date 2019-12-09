@@ -1,3 +1,4 @@
+import { Point } from '@/types/primitives';
 
 const BOX_WIDTH = 16;
 
@@ -118,3 +119,11 @@ export function getDownArrow() {
   return downArrow;
 }
 
+export function getMouseCoor(event: MouseEvent, canvas: HTMLCanvasElement): Point {
+  const boundingRect = canvas.getBoundingClientRect();
+
+  return {
+    x: event.x - boundingRect.left,
+    y: event.y - boundingRect.top
+  }
+}

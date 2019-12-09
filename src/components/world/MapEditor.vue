@@ -1,13 +1,21 @@
 <template>
   <div class="map-base">
-    <canvas
-      @mousedown="mouseDown"
-      @mousemove="mouseMove"
-      @mouseup="mouseUp"
-      @contextmenu="contextMenu"
-      width="400"
-      height="300"
-    ></canvas>
+    <CanvasScrollport
+      :scrollRect="scrollRect"
+      :size="containerArea"
+      :hideHScroll="hideHScroll"
+      :hideVScroll="hideVScroll"
+      @update="updateScrollRect"
+    >
+      <canvas
+        @mousedown="mouseDown"
+        @mousemove="mouseMove"
+        @mouseup="mouseUp"
+        @contextmenu="contextMenu"
+        width="400"
+        height="300"
+      ></canvas>
+    </CanvasScrollport>
   </div>
 </template>
 
@@ -26,9 +34,13 @@ import { namespace } from "vuex-class";
 
 import MapBase from "./MapBase.vue";
 
+import CanvasScrollport from "@/components/ui/CanvasScrollport.vue";
+
 const world = namespace("world");
 
-@Component
+@Component({
+  components: { CanvasScrollport }
+})
 export default class MapEditor extends MapBase {
   private baseCoor!: Rect;
   private lastDrawCoor!: Point;
@@ -144,10 +156,12 @@ export default class MapEditor extends MapBase {
   public mouseDown(event: MouseEvent) {
     switch (event.button) {
       case 0:
+        /*
         if (this.clickScrollbars(event.clientX, event.clientY)) {
           this.drawMap();
           return;
         }
+        */
 
         this.isMouseDown = true;
         this.mapStore.mapMutator.newChange();
@@ -188,5 +202,22 @@ export default class MapEditor extends MapBase {
 }
 </script>
 
-<style>
+<style scoped>
+div.map-base {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* overflow: hidden; */
+  box-sizing: border-box;
+
+  border: 1;
+  border-style: groove solid;
+  background: linear-gradient(#333, #555);
+}
+
+/*
+canvas {
+  width: calc(100% - 16px);
+}
+*/
 </style>

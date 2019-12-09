@@ -31,9 +31,9 @@ export function add(el: Element, handler: Function) {
 
   if (observer) {
     observer.observe(el);
-  } else {
-    handler(el, el.getBoundingClientRect());
   }
+
+  handler(el, el.getBoundingClientRect());
 }
 
 export function remove(el: Element) {

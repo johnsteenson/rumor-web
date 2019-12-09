@@ -26,14 +26,14 @@ export class ImageManager {
     const canvas = document.createElement('canvas'),
       ctx: CanvasRenderingContext2D = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-    canvas.width = image.width * tileSize.scale;
-    canvas.height = image.height * tileSize.scale;
+    canvas.width = Math.floor(image.width * tileSize.scale);
+    canvas.height = Math.floor(image.height * tileSize.scale);
 
     ctx.drawImage(image,
       0,
       0,
-      image.width * tileSize.scale,
-      image.height * tileSize.scale,
+      Math.floor(image.width * tileSize.scale),
+      Math.floor(image.height * tileSize.scale),
     );
 
     return new TileImage(canvas, tileSize);

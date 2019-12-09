@@ -1,13 +1,21 @@
 <template>
-  <div>
-    <canvas
-      @mousedown="mouseDown"
-      @mousemove="mouseMove"
-      @mouseup="mouseUp"
-      @contextmenu="contextMenu"
-      width="200"
-      height="300"
-    ></canvas>
+  <div class="tile-palette">
+    <CanvasScrollport
+      :scrollRect="scrollRect"
+      :size="containerArea"
+      :hideHScroll="hideHScroll"
+      :hideVScroll="hideVScroll"
+    >
+      <canvas
+        class="drawable"
+        @mousedown="mouseDown"
+        @mousemove="mouseMove"
+        @mouseup="mouseUp"
+        @contextmenu="contextMenu"
+        width="1"
+        height="1"
+      ></canvas>
+    </CanvasScrollport>
   </div>
 </template>
 
@@ -19,9 +27,15 @@ import { TileSize, Rect } from "@/types/primitives";
 import TilesetBase from "./TilesetBase.vue";
 import { TileSelection } from "../../types/map";
 
+import CanvasScrollport from "@/components/ui/CanvasScrollport.vue";
+
 const world = namespace("world");
 
-@Component
+@Component({
+  components: {
+    CanvasScrollport
+  }
+})
 export default class TilePalette extends TilesetBase {
   private baseCoor = {} as Rect;
   private isMouseDown: boolean = false;
@@ -119,5 +133,20 @@ export default class TilePalette extends TilesetBase {
 }
 </script>
 
-<style>
+<style scoped>
+div.tile-palette {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  border: 1px;
+  border-style: groove solid;
+  box-sizing: border-box;
+  padding: 0 0 0 0;
+}
+
+canvas {
+  width: calc(100% - 16px);
+}
 </style>
