@@ -17,7 +17,7 @@ import {
   TemplateTile
 } from "@/types/tileset";
 import { TileImage } from "@/canvas/tileImage";
-import { Rect, TileSize } from "@/types/primitives";
+import { Rect, TileSize, TileDrawRect, Point } from "@/types/primitives";
 import { TileSelection } from "../../types/map";
 
 import CanvasBase from "./CanvasBase.vue";
@@ -31,6 +31,8 @@ export default class TilesetBase extends CanvasBase {
   protected image!: TileImage;
   protected section!: TilesetSection;
   protected tilesPerRow: number = 0;
+
+  protected tileDrawRect!: TileDrawRect;
 
   protected tileSize: TileSize = {
     w: 0,
@@ -80,11 +82,54 @@ export default class TilesetBase extends CanvasBase {
         9999
       );
 
+      this.setViewport({
+        l: 0,
+        t: 0,
+        r: view.tileSize.scaledW * this.section.tilesPerRow,
+        b:
+          Math.ceil(
+            this.section.templateTiles.length / this.section.tilesPerRow
+          ) * view.tileSize.scaledH
+      });
+
       this.forceResizeEvent();
     }
 
     this.tilesPerRow = this.section.tilesPerRow; // Math.floor(this.canvas.width / view.tileSize.scaledW);
     this.draw();
+  }
+
+  public calculateTileDrawRect(tileSize: TileSize): TileDrawRect {
+    const w =
+        Math.ceil(
+          this.section.templateTiles.length / this.section.tilesPerRow
+        ) * tileSize.scaledH,
+      h = Math.ceil(
+        this.section.templateTiles.length / this.section.tilesPerRow
+      ),
+      tileRect: Rect = {
+        l: Math.floor(this.scrollRect.innerL / this.tileSize.scaledW),
+        r: Math.min(
+          Math.ceil(this.scrollRect.innerR / this.tileSize.scaledW),
+          w
+        ),
+        t: Math.floor(this.scrollRect.innerT / this.tileSize.scaledH),
+        b: Math.min(
+          Math.ceil(this.scrollRect.innerB / this.tileSize.scaledH),
+          h
+        )
+      },
+      offset: Point = {
+        x: tileRect.l * this.tileSize.scaledW,
+        y: tileRect.t * this.tileSize.scaledH - this.scrollRect.innerT
+      };
+
+    this.tileDrawRect = {
+      tile: tileRect,
+      offset
+    };
+
+    return this.tileDrawRect;
   }
 
   public drawTiles() {
@@ -94,10 +139,12 @@ export default class TilesetBase extends CanvasBase {
 
     const tileset: Tileset = this.tilesetView.tileset,
       tileSize: TileSize = this.tileSize,
-      section: TilesetSection = this.section;
+      section: TilesetSection = this.section,
+      drawRect = this.calculateTileDrawRect(tileSize),
+      startIndex = drawRect.tile.t * this.section.tilesPerRow + drawRect.tile.l;
 
     let sx: number = 0,
-      sy: number = 0,
+      sy: number = drawRect.offset.y,
       i = 0,
       k = 0,
       templateTile: TemplateTile,
@@ -105,7 +152,7 @@ export default class TilesetBase extends CanvasBase {
       imgTileIndex: number,
       tile: Tile;
 
-    for (i = 0; i < section.templateTiles.length; i++) {
+    for (i = startIndex; i < section.templateTiles.length; i++) {
       if (k > 0 && k % section.tilesPerRow === 0) {
         sx = 0;
         sy = sy + tileSize.scaledH;
@@ -124,8 +171,6 @@ export default class TilesetBase extends CanvasBase {
     }
 
     const rect = this.$el.getBoundingClientRect();
-
-    // this.drawScrollbars();
   }
 
   protected onResize() {

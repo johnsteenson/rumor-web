@@ -11,8 +11,7 @@ import {
   Rect,
   Point,
   Dimension,
-  ScrollRect,
-  ScrollPos
+  ScrollRect
 } from "@/types/primitives";
 
 import {
@@ -51,32 +50,6 @@ export default class CanvasBase extends Vue {
     h: 9999
   };
 
-  protected viewport: Rect = {
-    l: 0,
-    t: 0,
-    r: 0,
-    b: 0
-  };
-
-  protected viewportOrigin: Rect = {
-    l: 0,
-    t: 0,
-    r: 0,
-    b: 0
-  };
-
-  protected visibleViewport: Rect = {
-    l: 0,
-    t: 0,
-    r: 0,
-    b: 0
-  };
-
-  protected clickOrigin: Point = {
-    x: 0,
-    y: 0
-  };
-
   protected scrollRect: ScrollRect = {
     innerL: 0,
     innerR: 0,
@@ -93,8 +66,8 @@ export default class CanvasBase extends Vue {
   @Prop() protected hideVScroll!: boolean;
 
   protected setMaxDrawArea(w: number, h: number) {
-    this.maxDrawArea.w = w + SCROLLBAR_WIDTH;
-    this.maxDrawArea.h = h + SCROLLBAR_WIDTH;
+    this.maxDrawArea.w = w;
+    this.maxDrawArea.h = h;
   }
 
   protected forceResizeEvent() {
@@ -127,8 +100,8 @@ export default class CanvasBase extends Vue {
       this.canvas.height = Math.floor(h);
     }
 
-    this.drawArea.w = w;
-    this.drawArea.h = h;
+    this.drawArea.w = this.canvas.width;
+    this.drawArea.h = this.canvas.height;
 
     this.containerArea = {
       w: this.canvas.clientWidth,
@@ -189,8 +162,6 @@ export default class CanvasBase extends Vue {
   }
 
   protected setViewport(viewport: Rect) {
-    this.viewport = viewport;
-
     this.scrollRect.outerL = viewport.l;
     this.scrollRect.outerR = viewport.r;
     this.scrollRect.outerT = viewport.t;

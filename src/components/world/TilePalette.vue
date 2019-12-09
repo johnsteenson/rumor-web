@@ -5,6 +5,7 @@
       :size="containerArea"
       :hideHScroll="hideHScroll"
       :hideVScroll="hideVScroll"
+      @update="updateScrollRect"
     >
       <canvas
         class="drawable"
@@ -23,11 +24,12 @@
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { namespace } from "vuex-class";
 import { TilesetView } from "@/types/tileset";
-import { TileSize, Rect } from "@/types/primitives";
+import { TileSize, Rect, Point } from "@/types/primitives";
 import TilesetBase from "./TilesetBase.vue";
 import { TileSelection } from "../../types/map";
 
 import CanvasScrollport from "@/components/ui/CanvasScrollport.vue";
+import { getMouseCoor } from "../../canvas/utils";
 
 const world = namespace("world");
 
@@ -43,10 +45,11 @@ export default class TilePalette extends TilesetBase {
   public mouseDown(event: MouseEvent) {
     const boundingRect = this.canvas.getBoundingClientRect(),
       xScale = this.canvas.width / (boundingRect.right - boundingRect.left),
-      yScale = this.canvas.height / (boundingRect.bottom - boundingRect.top);
+      yScale = this.canvas.height / (boundingRect.bottom - boundingRect.top),
+      mouse: Point = getMouseCoor(event, this.canvas);
 
-    this.baseCoor.l = (event.clientX - boundingRect.left) * xScale;
-    this.baseCoor.t = (event.clientY - boundingRect.top) * yScale;
+    this.baseCoor.l = mouse.x * xScale + this.scrollRect.innerL;
+    this.baseCoor.t = mouse.y * yScale + this.scrollRect.innerT;
     this.baseCoor.r = this.baseCoor.l + this.tilesetView.tileSize.scaledW;
     this.baseCoor.b = this.baseCoor.t + this.tilesetView.tileSize.scaledH;
 
@@ -111,17 +114,19 @@ export default class TilePalette extends TilesetBase {
   }
 
   public drawSelectionRect(rect: Rect) {
-    const w = rect.r - rect.l,
+    const x = rect.l - this.scrollRect.innerL,
+      y = rect.t - this.scrollRect.innerT,
+      w = rect.r - rect.l,
       h = rect.b - rect.t;
 
     this.context.lineWidth = 1;
     this.context.strokeStyle = "#111111";
-    this.context.strokeRect(rect.l, rect.t, w, h);
-    this.context.strokeRect(rect.l + 3, rect.t + 3, w - 4, h - 4);
+    this.context.strokeRect(x, y, w, h);
+    this.context.strokeRect(x + 3, y + 3, w - 4, h - 4);
     this.context.strokeStyle = "#ffff55";
-    this.context.strokeRect(rect.l + 1, rect.t + 1, w - 2, h - 2);
+    this.context.strokeRect(x + 1, y + 1, w - 2, h - 2);
     this.context.strokeStyle = "#ffffff";
-    this.context.strokeRect(rect.l + 2, rect.t + 2, w - 3, h - 3);
+    this.context.strokeRect(x + 2, y + 2, w - 3, h - 3);
   }
 
   public draw() {

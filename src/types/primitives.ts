@@ -41,4 +41,14 @@ export interface ScrollRect {
   outerB: number;
 };
 
+export interface TileDrawRect {
+  tile: Rect;
+  offset: Point;
+}
+
+export enum Axis {
+  HORIZONTAL = 1,
+  VERTICAL
+};
+
 export type Nullable<T> = T | null;
