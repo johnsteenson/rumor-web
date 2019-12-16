@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="toolbar">
     <slot></slot>
   </div>
 </template>
@@ -13,7 +13,7 @@ export default class Toolbar extends Vue {}
 </script>
 
 <style scoped>
-div {
+div.toolbar {
   width: 100%;
   background-color: #ccc;
   padding: 0 3px 1px 3px;

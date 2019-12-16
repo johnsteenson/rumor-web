@@ -1,6 +1,14 @@
 <template>
   <Toolbar>
-    <ToolbarGroup :items="items" :pressed="toolId" @changed="changed" />
+    <div class="toolbar-contents">
+      <div class>
+        <ToolbarGroup type="button" :items="items" :pressed="toolId" @changed="changeTool" />
+      </div>
+
+      <div class>
+        <ToolbarGroup type="tab" :items="layerItems" :pressed="layerId" @changed="changeLayer" />
+      </div>
+    </div>
   </Toolbar>
 </template>
 
@@ -33,23 +41,41 @@ export default class TileToolbar extends Vue {
     }
   ];
 
-  @world.Action("setTool") setTool!: Function;
-  @world.State("tool") toolId!: number;
+  public layerItems: ToolbarItem[] = [
+    {
+      id: 0,
+      label: "Layer 1",
+      icon: "numeric-1-box-multiple"
+    },
+    {
+      id: 1,
+      label: "Layer 2",
+      icon: "numeric-2-box-multiple"
+    }
+  ];
 
-  public changed(id: number) {
+  @world.Action("setTool") setTool!: Function;
+  @world.Action("setLayer") setLayer!: Function;
+  @world.State("tool") toolId!: number;
+  @world.State("curLayer") layerId!: number;
+
+  public changeTool(id: number) {
     console.log(`Select ${id}`);
     this.setTool(id);
+  }
+
+  public changeLayer(id: number) {
+    this.setLayer(id);
   }
 }
 </script>
 
 <style scoped>
-.toolbar {
-  width: 90%;
-  border: #ddd 1px solid;
-  padding: 10px 10px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
-  margin: 10px 15px;
+.toolbar-contents {
+  display: flex;
+  justify-content: space-between;
+  width: 95%;
+  /* border: #ddd 1px solid; */
+  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16); */
 }
 </style>

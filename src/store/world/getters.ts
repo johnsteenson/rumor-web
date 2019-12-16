@@ -24,6 +24,7 @@ export const getters: GetterTree<WorldState, RootState> = {
         tileset: mapStore.map.tileset,
         tileSelection: state.tileSelection,
         curSection: state.curSection,
+        curLayer: state.curLayer
       };
 
     return tilesetView;

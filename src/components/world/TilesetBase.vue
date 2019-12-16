@@ -152,6 +152,10 @@ export default class TilesetBase extends CanvasBase {
       imgTileIndex: number,
       tile: Tile;
 
+    this.context.fillStyle = "#ff678b";
+    this.context.rect(0, 0, this.canvas.width, this.canvas.height);
+    this.context.fill();
+
     for (i = startIndex; i < section.templateTiles.length; i++) {
       if (k > 0 && k % section.tilesPerRow === 0) {
         sx = 0;
@@ -169,8 +173,6 @@ export default class TilesetBase extends CanvasBase {
       sx = sx + tileSize.scaledW;
       k++;
     }
-
-    const rect = this.$el.getBoundingClientRect();
   }
 
   protected onResize() {

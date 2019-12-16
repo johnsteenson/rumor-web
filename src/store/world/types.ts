@@ -6,6 +6,7 @@ export interface WorldState {
   tool: ToolType;
   tileSelection: TileSelection;
   curSection: number;
+  curLayer: number;
   mapScale: number;
   componentScale: number;
   changes: TileChange[];

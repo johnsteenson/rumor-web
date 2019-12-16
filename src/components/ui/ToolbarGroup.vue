@@ -3,6 +3,7 @@
     <ToolbarButton
       v-for="item in items"
       :item="item"
+      :type="type"
       :pressed="pressed == item.id"
       :key="item.id"
       @selected="selected"
@@ -31,6 +32,7 @@ export default class ToolbarGroup extends Vue {
   @Prop() items!: ToolbarItem[];
   @Prop() callback!: Function;
   @Prop() pressed!: number;
+  @Prop() type!: string;
 
   public selected(item: ToolbarItem) {
     this.$emit("changed", item.id);

@@ -14,6 +14,7 @@ export interface TileSelection {
 }
 
 export interface MapLayer {
+  id: number;
   templateData: Uint16Array;
   visibleData: Uint16Array;
 }

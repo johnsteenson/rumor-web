@@ -2,23 +2,25 @@ import { MapLayer, TileMap } from '@/types/map';
 import { Tileset } from '@/types/tileset';
 
 const MAP_BYTE_SIZE = 2,
-  LAYERS = 2;
+  LAYERS = 2,
+  BASE_WATER_TILE = 4;
 
 function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBuffer) {
   const layers: MapLayer[] = new Array(totalLayers),
     totalTiles = w * h,
     halfPoint = buffer.byteLength / 2;
 
-  for (let i = 0; i < totalLayers; i++) {
-    layers[i] = {
-      templateData: new Uint16Array(buffer, i * MAP_BYTE_SIZE * totalTiles, totalTiles),
-      visibleData: new Uint16Array(buffer, halfPoint + (i * MAP_BYTE_SIZE * totalTiles), totalTiles)
+  for (let l = 0; l < totalLayers; l++) {
+    layers[l] = {
+      id: l,
+      templateData: new Uint16Array(buffer, l * MAP_BYTE_SIZE * totalTiles, totalTiles),
+      visibleData: new Uint16Array(buffer, halfPoint + (l * MAP_BYTE_SIZE * totalTiles), totalTiles)
     };
 
     for (let j = 0; j < h; j++) {
       for (let k = 0; k < w; k++) {
-        layers[i].templateData[j * w + k] = 0;
-        layers[i].visibleData[j * w + k] = 4;
+        layers[l].templateData[j * w + k] = 0;
+        layers[l].visibleData[j * w + k] = l === 0 ? BASE_WATER_TILE : 0;
       }
     }
   }

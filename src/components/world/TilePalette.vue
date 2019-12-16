@@ -60,7 +60,8 @@ export default class TilePalette extends TilesetBase {
   }
 
   public mouseMove(event: MouseEvent) {
-    if (this.mouseDown) {
+    event.preventDefault();
+    if (this.isMouseDown) {
       // TODO Add ability to select multiple tiles
     }
   }

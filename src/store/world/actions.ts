@@ -12,6 +12,10 @@ import { getFirstTile } from '@/lib/world/tileset';
 export const actions: ActionTree<WorldState, RootState> = {
   setTool({ commit }, toolId: number) {
     commit('setTool', toolId);
+  },
+
+  setLayer({ commit }, layerId: number) {
+    commit('setLayer', layerId);
   }
 
 };

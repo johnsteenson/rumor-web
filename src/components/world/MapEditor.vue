@@ -79,8 +79,11 @@ export default class MapEditor extends MapBase {
     this.baseCoor.b = 0;
 
     const x =
-        Math.floor(this.baseCoor.l / this.tileSize.scaledW) + tileDrawRect.l,
-      y = Math.floor(this.baseCoor.t / this.tileSize.scaledH) + tileDrawRect.t,
+        Math.floor(this.baseCoor.l / this.tileSize.scaledW) +
+        tileDrawRect.tile.l,
+      y =
+        Math.floor(this.baseCoor.t / this.tileSize.scaledH) +
+        tileDrawRect.tile.t,
       section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
       tileIndex = this.tilesetView.tileSelection.tileIndices[0],
       templateTile = section.templateTiles[tileIndex],
@@ -102,7 +105,7 @@ export default class MapEditor extends MapBase {
           y,
           w: 1,
           h: 1,
-          l: 0,
+          l: this.tilesetView.curLayer,
           data: [
             {
               s: this.tilesetView.curSection,
@@ -124,7 +127,7 @@ export default class MapEditor extends MapBase {
           y: fy,
           w: 1,
           h: 1,
-          l: 0,
+          l: this.tilesetView.curLayer,
           data: [
             {
               s: this.tilesetView.curSection,
@@ -143,7 +146,7 @@ export default class MapEditor extends MapBase {
       y,
       w: 1,
       h: 1,
-      l: 0,
+      l: this.tilesetView.curLayer,
       data: [
         {
           s: this.tilesetView.curSection,

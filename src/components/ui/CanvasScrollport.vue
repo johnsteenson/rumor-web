@@ -48,6 +48,7 @@ export default class CanvasScrollport extends Vue {
 
   private handleDragEvent = (instance: CanvasScrollport, event: MouseEvent) => {
     event.stopImmediatePropagation();
+    event.preventDefault();
 
     const canvas =
         instance.draggingAxis == Axis.HORIZONTAL

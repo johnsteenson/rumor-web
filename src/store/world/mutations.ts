@@ -19,4 +19,11 @@ export const mutations: MutationTree<WorldState> = {
     state.tool = toolId;
   },
 
+  setLayer(state, layerId: number) {
+    state.curLayer = layerId;
+    /* Currently, layer and section are tied together, but may change as we support
+    // different tileset formats */
+    state.curSection = layerId;
+  }
+
 };

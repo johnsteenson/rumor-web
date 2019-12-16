@@ -63,6 +63,7 @@ export interface TilesetView {
   tileset: Tileset;
   tileSize: TileSize;
   curSection: number;
+  curLayer: number;
   tool: ToolType;
   tileSelection: TileSelection;
 }

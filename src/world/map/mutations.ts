@@ -101,14 +101,16 @@ export class MapMutator {
         pv: 0
       }]);
 
-      visitSurroundingTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, (px: number, py: number) => {
-        surroundingTiles.push({
-          x: px,
-          y: py,
-          l: tileDraw.l
+      if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
+        visitSurroundingTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, (px: number, py: number) => {
+          surroundingTiles.push({
+            x: px,
+            y: py,
+            l: tileDraw.l
+          });
         });
 
-      });
+      }
 
       this.correctSurroundingAutotiles(surroundingTiles);
     }

@@ -1,8 +1,5 @@
 <template>
-  <div
-    :class="[pressed ? 'toolbar-button-pressed' : 'toolbar-button', 'toolbar-bg']"
-    @click="selected"
-  >
+  <div :class="[classSet, 'toolbar-bg']" @click="selected">
     <component :is="item.icon" />
   </div>
 </template>
@@ -13,18 +10,42 @@ import { namespace } from "vuex-class";
 
 import { ToolbarItem } from "./ToolbarGroup.vue";
 
+// Icons from: https://materialdesignicons.com/
 import BrushIcon from "vue-material-design-icons/Brush.vue";
 import FormatColorFillIcon from "vue-material-design-icons/FormatColorFill.vue";
+import Numeric1BoxMultiple from "vue-material-design-icons/Numeric1BoxMultiple.vue";
+import Numeric2BoxMultiple from "vue-material-design-icons/Numeric2BoxMultiple.vue";
 
 @Component({
   components: {
     BrushIcon,
-    FormatColorFillIcon
+    FormatColorFillIcon,
+    Numeric1BoxMultiple,
+    Numeric2BoxMultiple
   }
 })
 export default class ToolbarButton extends Vue {
   @Prop() item!: ToolbarItem;
   @Prop() pressed!: boolean;
+  @Prop({ default: "button" }) type!: String;
+
+  get classSet(): any {
+    switch (this.type) {
+      case "tab":
+        return {
+          "toolbar-tab": true,
+          "toolbar-tab-pressed": this.pressed
+        };
+        break;
+
+      default:
+        return {
+          "toolbar-button": true,
+          "toolbar-button-pressed": this.pressed
+        };
+        break;
+    }
+  }
 
   public selected() {
     this.$emit("selected", this.item);
@@ -42,20 +63,31 @@ export default class ToolbarButton extends Vue {
   margin: 0 2px;
 }
 
+.toolbar-button-pressed {
+  border-style: inset !important;
+}
+
+.toolbar-tab {
+  position: relative;
+  top: 1px;
+  border-width: 2px 2px 0 2px;
+  border-style: hidden;
+  border-radius: 25% 25% 0 0;
+  display: inline;
+  font-size: 1.4em;
+  padding: 2px;
+  margin: 0 2px;
+}
+
+.toolbar-tab-pressed {
+  border-style: outset !important;
+}
+
 .toolbar-bg {
   background-color: #ccc;
 }
 
 .toolbar-bg:hover {
   background-color: #eee;
-}
-
-.toolbar-button-pressed {
-  border-style: inset;
-  border-width: 2px;
-  display: inline;
-  font-size: 1.4em;
-  padding: 1px;
-  margin: 0 2px;
 }
 </style>

@@ -139,9 +139,14 @@ export function getWaterTileIndex(layer: MapLayer, tileset: Tileset, x: number, 
 export function calculateTileValue(layer: MapLayer, tileset: Tileset, x: number, y: number, w: number, h: number,
   templateTileValue: number): number {
   const templateTile = tilemap.getTemplateTile(templateTileValue, tileset),
-    sectionId = tilemap.unpackMapBuf(templateTileValue)[0];
+    templateTileVal = tilemap.unpackMapBuf(templateTileValue),
+    sectionId = templateTileVal[0];
 
   let tileIndex;
+
+  if (layer.id > 0 && templateTileVal[1] === 0) {
+    return tilemap.packMapBuf(sectionId, 0);
+  }
 
   switch (templateTile.type) {
     case TemplateTileType.SINGLE:
