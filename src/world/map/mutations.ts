@@ -1,5 +1,5 @@
 import { TileMap, TileChange, TileDraw, TileChangeEntry } from "@/types/map";
-import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue } from '@/lib/world/autotile';
+import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue, getSurroundingTiles } from '@/lib/world/autotile';
 import { Point } from '@/types/primitives';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { TemplateTileType } from '@/types/tileset';
@@ -82,18 +82,20 @@ export class MapMutator {
       surroundingTiles: Point[] = [],
       changeListStart = this.changes[this.changes.length - 1].entries.length;
 
-    for (const drawData of tileDraw.data) {
-      const layer = this.map.layer[tileDraw.l];
-      const section = this.map.tileset.sections[drawData.s];
-      const templateTile = section.templateTiles[drawData.t];
-      const templateTileValue = packMapBuf(drawData.s, drawData.t);
+    for (const [i, drawData] of tileDraw.data.entries()) {
+      const layer = this.map.layer[tileDraw.l],
+        section = this.map.tileset.sections[drawData.s],
+        templateTile = section.templateTiles[drawData.t],
+        templateTileValue = packMapBuf(drawData.s, drawData.t),
+        px = tileDraw.x + (i % tileDraw.w),
+        py = tileDraw.y + (Math.floor(i / tileDraw.w));
 
       let tileValue;
 
-      tileValue = calculateTileValue(layer, this.map.tileset, tileDraw.x, tileDraw.y, w, h, templateTileValue);
+      tileValue = calculateTileValue(layer, this.map.tileset, px, py, w, h, templateTileValue);
       this.applyTileChanges([{
-        x: tileDraw.x,
-        y: tileDraw.y,
+        x: px,
+        y: py,
         l: tileDraw.l,
         t: templateTileValue,
         v: tileValue,
@@ -101,18 +103,11 @@ export class MapMutator {
         pv: 0
       }]);
 
-      if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
-        visitSurroundingTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, (px: number, py: number) => {
-          surroundingTiles.push({
-            x: px,
-            y: py,
-            l: tileDraw.l
-          });
-        });
 
-      }
+    }
 
-      this.correctSurroundingAutotiles(surroundingTiles);
+    if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
+      this.correctSurroundingAutotiles(getSurroundingTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, tileDraw.l));
     }
 
     this.mapUpdate(this.changes[this.changes.length - 1].entries.slice(changeListStart));

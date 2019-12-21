@@ -40,20 +40,29 @@ const world = namespace("world");
 })
 export default class TilePalette extends TilesetBase {
   private baseCoor = {} as Rect;
+  private lastTilePt: Point = { x: -1, y: -1 };
   private isMouseDown: boolean = false;
 
   public mouseDown(event: MouseEvent) {
     const boundingRect = this.canvas.getBoundingClientRect(),
       xScale = this.canvas.width / (boundingRect.right - boundingRect.left),
       yScale = this.canvas.height / (boundingRect.bottom - boundingRect.top),
-      mouse: Point = getMouseCoor(event, this.canvas);
+      mouse: Point = getMouseCoor(event, this.canvas),
+      clickPt: Point = {
+        x: mouse.x * xScale + this.scrollRect.innerL,
+        y: mouse.y * yScale + this.scrollRect.innerT
+      };
 
-    this.baseCoor.l = mouse.x * xScale + this.scrollRect.innerL;
-    this.baseCoor.t = mouse.y * yScale + this.scrollRect.innerT;
-    this.baseCoor.r = this.baseCoor.l + this.tilesetView.tileSize.scaledW;
-    this.baseCoor.b = this.baseCoor.t + this.tilesetView.tileSize.scaledH;
+    this.lastTilePt.x = Math.floor(clickPt.x / this.tileSize.scaledW);
+    this.lastTilePt.y = Math.floor(clickPt.y / this.tileSize.scaledH);
+
+    this.baseCoor.l = this.lastTilePt.x;
+    this.baseCoor.t = this.lastTilePt.y;
+    this.baseCoor.r = this.baseCoor.l + 1;
+    this.baseCoor.b = this.baseCoor.t + 1;
 
     const tileSelection = this.createSelectionFromRect(this.baseCoor);
+
     this.isMouseDown = true;
 
     this.$emit("tile-selected", tileSelection);
@@ -62,7 +71,40 @@ export default class TilePalette extends TilesetBase {
   public mouseMove(event: MouseEvent) {
     event.preventDefault();
     if (this.isMouseDown) {
-      // TODO Add ability to select multiple tiles
+      const boundingRect = this.canvas.getBoundingClientRect(),
+        xScale = this.canvas.width / (boundingRect.right - boundingRect.left),
+        yScale = this.canvas.height / (boundingRect.bottom - boundingRect.top),
+        mouse: Point = getMouseCoor(event, this.canvas),
+        clickPt: Point = {
+          x: mouse.x * xScale + this.scrollRect.innerL,
+          y: mouse.y * yScale + this.scrollRect.innerT
+        },
+        tilePt: Point = {
+          x: Math.floor(clickPt.x / this.tileSize.scaledW),
+          y: Math.floor(clickPt.y / this.tileSize.scaledH)
+        },
+        selCoor: Rect = { ...this.baseCoor };
+
+      if (tilePt.x === this.lastTilePt.x && tilePt.y === this.lastTilePt.y) {
+        return;
+      }
+
+      this.lastTilePt = { ...tilePt };
+
+      if (tilePt.x > this.baseCoor.l) {
+        selCoor.r = tilePt.x + 1;
+      } else {
+        selCoor.l = tilePt.x;
+      }
+
+      if (tilePt.y > this.baseCoor.t) {
+        selCoor.b = tilePt.y + 1;
+      } else {
+        selCoor.t = tilePt.y;
+      }
+
+      const tileSelection = this.createSelectionFromRect(selCoor);
+      this.$emit("tile-selected", tileSelection);
     }
   }
 
@@ -79,22 +121,21 @@ export default class TilePalette extends TilesetBase {
   }
 
   public createSelectionFromRect(rect: Rect): TileSelection {
-    // For now, select left and topmost tile only
     const l = Math.floor(rect.l / this.tilesetView.tileSize.scaledW),
       t = Math.floor(rect.t / this.tilesetView.tileSize.scaledH),
       r = Math.floor(rect.r / this.tilesetView.tileSize.scaledW),
       b = Math.floor(rect.b / this.tilesetView.tileSize.scaledH),
       tileIndices = [];
 
-    for (let y = t; y < b; y++) {
-      for (let x = l; x < r; x++) {
+    for (let y = rect.t; y < rect.b; y++) {
+      for (let x = rect.l; x < rect.r; x++) {
         tileIndices.push(y * this.tilesPerRow + x);
       }
     }
 
     return {
-      w: r - l,
-      h: b - t,
+      w: rect.r - rect.l,
+      h: rect.b - rect.t,
       tileIndices
     };
   }

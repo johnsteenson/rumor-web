@@ -3,6 +3,7 @@ import { TemplateTileType, Tileset } from '@/types/tileset';
 import { RECT_AUTOTILE_MAP, RECT_AUTOTILE_MAP_MASK, WATER_AUTOTILE_MAP, WATER_AUTOTILE_MAP_MASK } from './autotile-map';
 import * as tilemap from './tilemap';
 import * as tilesetUtils from './tileset';
+import { Point } from '@/types/primitives';
 
 const SAME_TILE_N = 1024,
   SAME_TILE_W = 256,
@@ -192,4 +193,14 @@ export function visitSurroundingTiles(x: number, y: number, w: number, h: number
   for (let i = y; i < y + h; i++) {
     callInBounds(x + w, i);
   }
+}
+
+export function getSurroundingTiles(x: number, y: number, w: number, h: number, mapW: number, mapH: number, l: number): Point[] {
+  const changes: Point[] = [];
+
+  visitSurroundingTiles(x, y, w, h, mapW, mapH, (tx: number, ty: number) => {
+    changes.push({ x: tx, y: ty, l });
+  });
+
+  return changes;
 }

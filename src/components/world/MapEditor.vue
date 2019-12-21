@@ -27,7 +27,8 @@ import {
   TileChangeEntry,
   ToolType,
   TileDrawData,
-  TileDraw
+  TileDraw,
+  TileChange
 } from "../../types/map";
 
 import { namespace } from "vuex-class";
@@ -43,14 +44,13 @@ const world = namespace("world");
 })
 export default class MapEditor extends MapBase {
   private baseCoor!: Rect;
-  private lastDrawCoor!: Point;
+  private lastDrawCoor: Point = { x: -1, y: -1 };
+  private startDrawCoor: Point = { x: -1, y: -1 };
 
-  private isMouseDown!: boolean;
+  private isMouseDown: boolean = false;
 
   private created() {
     this.baseCoor = {} as Rect;
-    this.lastDrawCoor = { x: -1, y: -1 };
-    this.isMouseDown = false;
   }
 
   private applyDraw(tileDraw: TileDraw) {
@@ -64,6 +64,33 @@ export default class MapEditor extends MapBase {
         this.mapStore.mapMutator.fill(tileDraw);
         break;
     }
+  }
+
+  private getSelectionCoorForMapCoor(
+    baseX: number,
+    baseY: number,
+    selX: number,
+    selY: number
+  ): number {
+    let shiftSelX =
+        (baseX + selX - this.startDrawCoor.x) %
+        this.tilesetView.tileSelection.w,
+      shiftSelY =
+        (baseY + selY - this.startDrawCoor.y) %
+        this.tilesetView.tileSelection.h;
+
+    /* Loop around to end of selection rect if moving negatively along axis (left or up) */
+    if (shiftSelX < 0) {
+      shiftSelX = this.tilesetView.tileSelection.w - Math.abs(shiftSelX);
+    }
+
+    if (shiftSelY < 0) {
+      shiftSelY = this.tilesetView.tileSelection.h - Math.abs(shiftSelY);
+    }
+
+    return this.tilesetView.tileSelection.tileIndices[
+      shiftSelY * this.tilesetView.tileSelection.w + shiftSelX
+    ];
   }
 
   public async drawSelectedTiles(clientX: number, clientY: number) {
@@ -85,15 +112,20 @@ export default class MapEditor extends MapBase {
         Math.floor(this.baseCoor.t / this.tileSize.scaledH) +
         tileDrawRect.tile.t,
       section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
-      tileIndex = this.tilesetView.tileSelection.tileIndices[0],
-      templateTile = section.templateTiles[tileIndex],
-      tile = section.tiles[tileIndex].t,
-      tileDisplayIndex = Array.isArray(tile) ? tile[0] : tile;
+      tileSelection = this.tilesetView.tileSelection;
+
+    if (this.startDrawCoor.x === -1) {
+      this.startDrawCoor.x = x;
+      this.startDrawCoor.y = y;
+    }
 
     if (this.lastDrawCoor.x === x && this.lastDrawCoor.y === y) {
       return;
     }
 
+    /* TODO Make interpolation work with multiple tiles.  This may no longer be needed now that drawing has considerably
+       sped up after only drawing the tiles changed */
+    /*
     if (this.lastDrawCoor.x > -1 && Math.abs(this.lastDrawCoor.x - x) > 1) {
       for (
         let fx = Math.min(this.lastDrawCoor.x, x);
@@ -137,22 +169,34 @@ export default class MapEditor extends MapBase {
         });
       }
     }
+    */
 
     this.lastDrawCoor.x = x;
     this.lastDrawCoor.y = y;
 
+    /* TODO For now, redraw all the tiles when placing multiple tiles.  If it's too slow, I'll do a check to not 
+       redraw any tiles inside of the last drawn rect */
+
+    const changes: TileDrawData[] = [];
+
+    for (let selY = 0; selY < tileSelection.h; selY++) {
+      for (let selX = 0; selX < tileSelection.w; selX++) {
+        const selTileIndex = this.getSelectionCoorForMapCoor(x, y, selX, selY);
+
+        changes.push({
+          s: this.tilesetView.curSection,
+          t: selTileIndex
+        });
+      }
+    }
+
     this.applyDraw({
       x,
       y,
-      w: 1,
-      h: 1,
+      w: tileSelection.w,
+      h: tileSelection.h,
       l: this.tilesetView.curLayer,
-      data: [
-        {
-          s: this.tilesetView.curSection,
-          t: tileIndex
-        }
-      ]
+      data: changes
     });
   }
 
@@ -184,6 +228,8 @@ export default class MapEditor extends MapBase {
     this.isMouseDown = false;
     this.lastDrawCoor.x = -1;
     this.lastDrawCoor.y = -1;
+    this.startDrawCoor.x = -1;
+    this.startDrawCoor.y = -1;
   }
 
   public mouseMove(event: MouseEvent) {
