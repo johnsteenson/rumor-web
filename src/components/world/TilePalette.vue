@@ -24,9 +24,11 @@
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { namespace } from "vuex-class";
 import { TilesetView } from "@/types/tileset";
-import { TileSize, Rect, Point } from "@/types/primitives";
+import { Axis, TileSize, Rect, Point } from "@/types/primitives";
 import TilesetBase from "./TilesetBase.vue";
 import { TileSelection } from "../../types/map";
+
+import { registerWindowEvent, unregisterWindowEvent } from "@/lib/windowEvent";
 
 import CanvasScrollport from "@/components/ui/CanvasScrollport.vue";
 import { getMouseCoor } from "../../canvas/utils";
@@ -42,6 +44,14 @@ export default class TilePalette extends TilesetBase {
   private baseCoor = {} as Rect;
   private lastTilePt: Point = { x: -1, y: -1 };
   private isMouseDown: boolean = false;
+
+  public mounted() {
+    registerWindowEvent("wheel", this.onWheel.bind(this));
+  }
+
+  public beforeDestroy() {
+    unregisterWindowEvent("wheel");
+  }
 
   public pointerDown(event: PointerEvent) {
     const boundingRect = this.canvas.getBoundingClientRect(),
@@ -113,6 +123,14 @@ export default class TilePalette extends TilesetBase {
 
     if (event.button === 2) {
       event.preventDefault();
+    }
+  }
+
+  public onWheel(event: WheelEvent) {
+    if (event.deltaY > 0) {
+      this.scrollViewport(0, 20);
+    } else {
+      this.scrollViewport(0, -20);
     }
   }
 

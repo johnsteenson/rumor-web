@@ -152,7 +152,7 @@ export default class CanvasScrollport extends Vue {
     return rect;
   }
 
-  @Watch("scrollRect", { immediate: true })
+  @Watch("scrollRect", { immediate: true, deep: true })
   onScrollPosChanged(scroll: ScrollRect) {
     this.$nextTick(() => {
       this.draw();
