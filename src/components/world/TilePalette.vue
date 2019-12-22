@@ -9,9 +9,9 @@
     >
       <canvas
         class="drawable"
-        @mousedown="mouseDown"
-        @mousemove="mouseMove"
-        @mouseup="mouseUp"
+        @pointerdown="pointerDown"
+        @pointermove="pointerMove"
+        @pointerup="pointerUp"
         @contextmenu="contextMenu"
         width="1"
         height="1"
@@ -43,7 +43,7 @@ export default class TilePalette extends TilesetBase {
   private lastTilePt: Point = { x: -1, y: -1 };
   private isMouseDown: boolean = false;
 
-  public mouseDown(event: MouseEvent) {
+  public pointerDown(event: PointerEvent) {
     const boundingRect = this.canvas.getBoundingClientRect(),
       xScale = this.canvas.width / (boundingRect.right - boundingRect.left),
       yScale = this.canvas.height / (boundingRect.bottom - boundingRect.top),
@@ -68,7 +68,7 @@ export default class TilePalette extends TilesetBase {
     this.$emit("tile-selected", tileSelection);
   }
 
-  public mouseMove(event: MouseEvent) {
+  public pointerMove(event: PointerEvent) {
     event.preventDefault();
     if (this.isMouseDown) {
       const boundingRect = this.canvas.getBoundingClientRect(),
@@ -108,7 +108,7 @@ export default class TilePalette extends TilesetBase {
     }
   }
 
-  public mouseUp(event: MouseEvent) {
+  public pointerUp(event: PointerEvent) {
     this.isMouseDown = false;
 
     if (event.button === 2) {

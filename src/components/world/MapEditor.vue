@@ -8,9 +8,9 @@
       @update="updateScrollRect"
     >
       <canvas
-        @mousedown="mouseDown"
-        @mousemove="mouseMove"
-        @mouseup="mouseUp"
+        @pointerdown="pointerDown"
+        @pointermove="pointerMove"
+        @pointerup="pointerUp"
         @contextmenu="contextMenu"
         width="400"
         height="300"
@@ -200,7 +200,7 @@ export default class MapEditor extends MapBase {
     });
   }
 
-  public mouseDown(event: MouseEvent) {
+  public pointerDown(event: PointerEvent) {
     switch (event.button) {
       case 0:
         /*
@@ -224,7 +224,7 @@ export default class MapEditor extends MapBase {
     this.refresh();
   }
 
-  public mouseUp(event: MouseEvent) {
+  public pointerUp(event: PointerEvent) {
     this.isMouseDown = false;
     this.lastDrawCoor.x = -1;
     this.lastDrawCoor.y = -1;
@@ -232,7 +232,7 @@ export default class MapEditor extends MapBase {
     this.startDrawCoor.y = -1;
   }
 
-  public mouseMove(event: MouseEvent) {
+  public pointerMove(event: PointerEvent) {
     if (this.isMouseDown) {
       /*
       console.log(

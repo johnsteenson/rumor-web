@@ -1,8 +1,8 @@
 <template>
   <div class="canvas-container">
     <slot></slot>
-    <canvas @mousedown="clickVertical" class="vbar" width="16" height="16" v-if="!hideVScroll"></canvas>
-    <canvas @mousedown="clickHorizontal" class="hbar" width="16" height="16" v-if="!hideHScroll"></canvas>
+    <canvas @pointerdown="clickVertical" class="vbar" width="16" height="16" v-if="!hideVScroll"></canvas>
+    <canvas @pointerdown="clickHorizontal" class="hbar" width="16" height="16" v-if="!hideHScroll"></canvas>
   </div>
 </template>
 
@@ -76,8 +76,8 @@ export default class CanvasScrollport extends Vue {
   };
 
   private handleReleaseEvent = (instance: CanvasScrollport) => {
-    window.removeEventListener("mousemove", instance.dragEventFunc, true);
-    window.removeEventListener("mouseup", instance.releaseEventFunc, true);
+    window.removeEventListener("pointermove", instance.dragEventFunc, true);
+    window.removeEventListener("pointerup", instance.releaseEventFunc, true);
   };
 
   private toScrollbarCoor(axis: Axis, val: number): number {
@@ -251,8 +251,8 @@ export default class CanvasScrollport extends Vue {
         self.handleReleaseEvent(self);
       };
 
-      window.addEventListener("mouseup", this.releaseEventFunc, true);
-      window.addEventListener("mousemove", this.dragEventFunc, true);
+      window.addEventListener("pointerup", this.releaseEventFunc, true);
+      window.addEventListener("pointermove", this.dragEventFunc, true);
 
       if (val < start || val > end) {
         this.trackOrigin = val - SCROLLBAR_OFFSET - len / 2;
@@ -261,7 +261,7 @@ export default class CanvasScrollport extends Vue {
     }
   }
 
-  public clickHorizontal(e: MouseEvent) {
+  public clickHorizontal(e: PointerEvent) {
     const pt: Point = getMouseCoor(e, this.hCanvas);
 
     this.handleClick(
@@ -274,7 +274,7 @@ export default class CanvasScrollport extends Vue {
     );
   }
 
-  public clickVertical(e: MouseEvent) {
+  public clickVertical(e: PointerEvent) {
     const pt: Point = getMouseCoor(e, this.vCanvas);
 
     this.handleClick(

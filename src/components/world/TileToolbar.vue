@@ -60,7 +60,6 @@ export default class TileToolbar extends Vue {
   @world.State("curLayer") layerId!: number;
 
   public changeTool(id: number) {
-    console.log(`Select ${id}`);
     this.setTool(id);
   }
 
