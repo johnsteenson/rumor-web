@@ -36,6 +36,7 @@ import { namespace } from "vuex-class";
 import MapBase from "./MapBase.vue";
 
 import CanvasScrollport from "@/components/ui/CanvasScrollport.vue";
+import { getMouseCoor } from "../../canvas/utils";
 
 const world = namespace("world");
 
@@ -46,6 +47,9 @@ export default class MapEditor extends MapBase {
   private baseCoor!: Rect;
   private lastDrawCoor: Point = { x: -1, y: -1 };
   private startDrawCoor: Point = { x: -1, y: -1 };
+
+  private hoverRect: Rect = { l: -1, r: -1, t: -1, b: -1 };
+  private lastHoverRect: Rect = { l: -1, r: -1, t: -1, b: -1 };
 
   private isMouseDown: boolean = false;
 
@@ -93,33 +97,32 @@ export default class MapEditor extends MapBase {
     ];
   }
 
-  public async drawSelectedTiles(clientX: number, clientY: number) {
-    const boundingRect = this.canvas.getBoundingClientRect(),
-      xScale = (boundingRect.right - boundingRect.left) / this.canvas.width,
-      yScale = (boundingRect.bottom - boundingRect.top) / this.canvas.height,
+  public async drawSelectedTiles(event: PointerEvent) {
+    const mouse = getMouseCoor(event, this.canvas),
       map = this.map,
-      tileDrawRect = this.calculateTileDrawRect(map, this.tileSize);
+      tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
+      section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
+      tileSelection = this.tilesetView.tileSelection;
 
-    this.baseCoor.l = clientX - boundingRect.left - this.mapOffset.x;
-    this.baseCoor.t = clientY - boundingRect.top - this.mapOffset.y;
+    /*
+    this.baseCoor.l = mouse.x - this.mapOffset.x;
+    this.baseCoor.t = mouse.y - this.mapOffset.y;
     this.baseCoor.r = 0;
     this.baseCoor.b = 0;
 
     const x =
         Math.floor(this.baseCoor.l / this.tileSize.scaledW) +
-        tileDrawRect.tile.l,
+        this.tileDrawRect.tile.l,
       y =
         Math.floor(this.baseCoor.t / this.tileSize.scaledH) +
-        tileDrawRect.tile.t,
-      section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
-      tileSelection = this.tilesetView.tileSelection;
+        this.tileDrawRect.tile.t,*/
 
     if (this.startDrawCoor.x === -1) {
-      this.startDrawCoor.x = x;
-      this.startDrawCoor.y = y;
+      this.startDrawCoor.x = tilePt.x;
+      this.startDrawCoor.y = tilePt.y;
     }
 
-    if (this.lastDrawCoor.x === x && this.lastDrawCoor.y === y) {
+    if (this.lastDrawCoor.x === tilePt.x && this.lastDrawCoor.y === tilePt.y) {
       return;
     }
 
@@ -171,8 +174,8 @@ export default class MapEditor extends MapBase {
     }
     */
 
-    this.lastDrawCoor.x = x;
-    this.lastDrawCoor.y = y;
+    this.lastDrawCoor.x = tilePt.x;
+    this.lastDrawCoor.y = tilePt.y;
 
     /* TODO For now, redraw all the tiles when placing multiple tiles.  If it's too slow, I'll do a check to not 
        redraw any tiles inside of the last drawn rect */
@@ -181,7 +184,12 @@ export default class MapEditor extends MapBase {
 
     for (let selY = 0; selY < tileSelection.h; selY++) {
       for (let selX = 0; selX < tileSelection.w; selX++) {
-        const selTileIndex = this.getSelectionCoorForMapCoor(x, y, selX, selY);
+        const selTileIndex = this.getSelectionCoorForMapCoor(
+          tilePt.x,
+          tilePt.y,
+          selX,
+          selY
+        );
 
         changes.push({
           s: this.tilesetView.curSection,
@@ -191,13 +199,59 @@ export default class MapEditor extends MapBase {
     }
 
     this.applyDraw({
-      x,
-      y,
+      x: tilePt.x,
+      y: tilePt.y,
       w: tileSelection.w,
       h: tileSelection.h,
       l: this.tilesetView.curLayer,
       data: changes
     });
+  }
+
+  public drawHoverRect(event: PointerEvent) {
+    const mouse = getMouseCoor(event, this.canvas),
+      tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
+      tileSelection = this.tilesetView.tileSelection,
+      hoverRect: Rect = {
+        l: tilePt.x,
+        t: tilePt.y,
+        r: tilePt.x + tileSelection.w,
+        b: tilePt.y + tileSelection.h
+      };
+
+    if (
+      hoverRect.l === this.lastHoverRect.l &&
+      hoverRect.t === this.lastHoverRect.t &&
+      hoverRect.r === this.lastHoverRect.r &&
+      hoverRect.b === this.lastHoverRect.b
+    ) {
+      return;
+    }
+
+    if (this.lastHoverRect.l !== -1) {
+      this.redrawRect(this.lastHoverRect);
+    }
+
+    this.redrawRect(hoverRect);
+    this.drawSelectionRect(this.tileToCanvasRect(hoverRect));
+
+    this.lastHoverRect = hoverRect;
+  }
+
+  public drawSelectionRect(rect: Rect) {
+    const x = rect.l,
+      y = rect.t,
+      w = rect.r - rect.l,
+      h = rect.b - rect.t;
+
+    this.context.lineWidth = 1;
+    this.context.strokeStyle = "#111111";
+    this.context.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    this.context.strokeRect(x + 4, y + 4, w - 6, h - 6);
+    this.context.strokeStyle = "#ffff55";
+    this.context.strokeRect(x + 2, y + 2, w - 4, h - 4);
+    this.context.strokeStyle = "#ffffff";
+    this.context.strokeRect(x + 3, y + 3, w - 5, h - 5);
   }
 
   public pointerDown(event: PointerEvent) {
@@ -212,7 +266,7 @@ export default class MapEditor extends MapBase {
 
         this.isMouseDown = true;
         this.mapStore.mapMutator.newChange();
-        this.drawSelectedTiles(event.clientX, event.clientY);
+        this.drawSelectedTiles(event);
         break;
 
       case 2:
@@ -241,8 +295,10 @@ export default class MapEditor extends MapBase {
         } at ${performance.now()}`
       );
       */
-      this.drawSelectedTiles(event.clientX, event.clientY);
+      this.drawSelectedTiles(event);
     }
+
+    this.drawHoverRect(event);
   }
 
   public contextMenu(event: MouseEvent) {

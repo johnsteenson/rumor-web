@@ -51,7 +51,10 @@ export default class MapBase extends CanvasBase {
   protected image!: TileImage[];
   protected tileset!: Tileset;
   protected tileSize!: TileSize;
+
   protected mapOffset!: Point;
+  protected tileDrawRect!: TileDrawRect;
+
   protected mapViewport!: Rect;
   protected visibleViewport!: Rect;
   protected map!: TileMap;
@@ -127,8 +130,16 @@ export default class MapBase extends CanvasBase {
     });
   }
 
+  protected updateCoordinates() {
+    this.mapOffset = this.calculateCenterCoorOffset();
+    this.tileDrawRect = this.calculateTileDrawRect(this.map, this.tileSize);
+  }
+
   protected onResize() {
-    this.drawMap();
+    this.$nextTick(() => {
+      this.updateCoordinates();
+      this.drawMap();
+    });
   }
 
   protected refreshViewport() {
@@ -191,6 +202,47 @@ export default class MapBase extends CanvasBase {
     };
   }
 
+  public tileToCanvasCoor(x: number, y: number): Point {
+    return {
+      x:
+        this.mapOffset.x +
+        (x - this.tileDrawRect.tile.l) * this.tileSize.scaledW,
+      y:
+        this.mapOffset.y +
+        (y - this.tileDrawRect.tile.t) * this.tileSize.scaledH
+    };
+  }
+
+  public canvasToTileCoor(x: number, y: number): Point {
+    return {
+      x:
+        Math.floor(x / this.tileSize.scaledW) -
+        this.mapOffset.x +
+        this.tileDrawRect.tile.l,
+      y:
+        Math.floor(y / this.tileSize.scaledH) -
+        this.mapOffset.y +
+        this.tileDrawRect.tile.t
+    };
+  }
+
+  public tileToCanvasRect(rect: Rect): Rect {
+    return {
+      l:
+        this.mapOffset.x +
+        (rect.l - this.tileDrawRect.tile.l) * this.tileSize.scaledW,
+      t:
+        this.mapOffset.y +
+        (rect.t - this.tileDrawRect.tile.t) * this.tileSize.scaledH,
+      r:
+        this.mapOffset.x +
+        (rect.r - this.tileDrawRect.tile.l) * this.tileSize.scaledW,
+      b:
+        this.mapOffset.y +
+        (rect.b - this.tileDrawRect.tile.t) * this.tileSize.scaledH
+    };
+  }
+
   public calculateTileDrawRect(map: TileMap, tileSize: TileSize): TileDrawRect {
     const rect: Rect = {
       l: Math.floor(this.scrollRect.innerL / this.tileSize.scaledW),
@@ -209,6 +261,69 @@ export default class MapBase extends CanvasBase {
     return { tile: rect, offset: { x: 0, y: 0 } };
   }
 
+  protected drawTile(
+    sectionId: number,
+    tileId: number,
+    sx: number,
+    sy: number
+  ) {
+    const tile = this.tileset.sections[sectionId].tiles[tileId];
+
+    if (Array.isArray(tile.t)) {
+      const len: number = tile.flen || tile.t.length;
+      let quarter: number = tile.quarter || 255;
+
+      for (let k = 0; k < len; k++) {
+        this.image[sectionId].drawSubTiles(
+          this.context,
+          sx,
+          sy,
+          tile.t[k],
+          quarter
+        );
+        quarter = quarter >> 4;
+      }
+    } else {
+      this.image[sectionId].drawTile(this.context, sx, sy, tile.t as number);
+    }
+  }
+
+  protected redrawRect(rect: Rect) {
+    let x: number = 0,
+      y: number = 0,
+      l: number = 0,
+      startPt: Point = this.tileToCanvasCoor(rect.l, rect.t),
+      sx: number = startPt.x,
+      sy: number = startPt.y,
+      map: TileMap = this.map,
+      mapBuf: number,
+      mapVal: number[];
+
+    for (y = rect.t; y < rect.b; y++) {
+      for (x = rect.l; x < rect.r; x++) {
+        for (l = 0; l < MAX_LAYER; l++) {
+          mapBuf = map.layer[l].visibleData[y * map.w + x];
+          mapVal = unpackMapBuf(mapBuf);
+
+          /* Don't draw tile if it's an empty tile */
+          if (l > 0 && mapVal[1] === 0) {
+            continue;
+          }
+
+          if (l >= 1) {
+          }
+          if (l < 1 || mapVal[1] !== 0) {
+            this.drawTile(mapVal[0], mapVal[1], sx, sy);
+          }
+        }
+
+        sx = sx + this.tileSize.scaledW;
+      }
+      sx = startPt.x;
+      sy = sy + this.tileSize.scaledH;
+    }
+  }
+
   public drawTiles(tileChanges: TileChangeEntry[]) {
     if (!this.map || !this.image || !this.tileSize) {
       return;
@@ -218,6 +333,7 @@ export default class MapBase extends CanvasBase {
       tileSize = this.tileSize;
 
     this.mapOffset = this.calculateCenterCoorOffset();
+    this.tileDrawRect = this.calculateTileDrawRect(map, tileSize);
 
     let tileDrawRect: TileDrawRect = this.calculateTileDrawRect(map, tileSize),
       rect = tileDrawRect.tile,
@@ -281,72 +397,13 @@ export default class MapBase extends CanvasBase {
       return;
     }
 
-    window.requestAnimationFrame(() => {
-      const map = this.map,
-        tileSize = this.tileSize;
+    const map = this.map,
+      tileSize = this.tileSize;
 
-      this.mapOffset = this.calculateCenterCoorOffset();
+    this.tileDrawRect = this.calculateTileDrawRect(map, tileSize);
+    this.mapOffset = this.calculateCenterCoorOffset();
 
-      let x: number = 0,
-        y: number = 0,
-        l: number = 0,
-        tileDrawRect: TileDrawRect = this.calculateTileDrawRect(map, tileSize),
-        k: number = 0,
-        sx: number = this.mapOffset.x,
-        sy: number = this.mapOffset.y,
-        mapBuf: number,
-        mapVal: number[],
-        tileIndex: number,
-        sectionNum: number,
-        tile: Tile;
-
-      for (y = tileDrawRect.tile.t; y < tileDrawRect.tile.b; y++) {
-        for (x = tileDrawRect.tile.l; x < tileDrawRect.tile.r; x++) {
-          for (l = 0; l < MAX_LAYER; l++) {
-            mapBuf = map.layer[l].visibleData[y * map.w + x];
-            mapVal = unpackMapBuf(mapBuf);
-
-            /* Don't draw tile if it's an empty tile */
-            if (l > 0 && mapVal[1] === 0) {
-              continue;
-            }
-
-            tile = this.tileset.sections[mapVal[0]].tiles[mapVal[1]];
-
-            if (l >= 1) {
-            }
-            if (l < 1 || mapVal[1] !== 0) {
-              if (Array.isArray(tile.t)) {
-                const len: number = tile.flen || tile.t.length;
-                let quarter: number = tile.quarter || 255;
-
-                for (k = 0; k < len; k++) {
-                  this.image[mapVal[0]].drawSubTiles(
-                    this.context,
-                    sx,
-                    sy,
-                    tile.t[k],
-                    quarter
-                  );
-                  quarter = quarter >> 4;
-                }
-              } else {
-                this.image[mapVal[0]].drawTile(
-                  this.context,
-                  sx,
-                  sy,
-                  tile.t as number
-                );
-              }
-            }
-          }
-
-          sx = sx + tileSize.scaledW;
-        }
-        sx = this.mapOffset.x;
-        sy = sy + tileSize.scaledH;
-      }
-    });
+    this.redrawRect(this.tileDrawRect.tile);
   }
 }
 </script>

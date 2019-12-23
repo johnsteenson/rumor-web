@@ -120,10 +120,12 @@ export function getDownArrow() {
 }
 
 export function getMouseCoor(event: MouseEvent, canvas: HTMLCanvasElement): Point {
-  const boundingRect = canvas.getBoundingClientRect();
+  const boundingRect = canvas.getBoundingClientRect(),
+    xScale = canvas.width / (boundingRect.right - boundingRect.left),
+    yScale = canvas.height / (boundingRect.bottom - boundingRect.top);
 
   return {
-    x: event.x - boundingRect.left,
-    y: event.y - boundingRect.top
+    x: (event.x - boundingRect.left) * xScale,
+    y: (event.y - boundingRect.top) * yScale
   }
 }

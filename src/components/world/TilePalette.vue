@@ -35,6 +35,8 @@ import { getMouseCoor } from "../../canvas/utils";
 
 const world = namespace("world");
 
+const WHEEL_SCROLL_SPEED = 70;
+
 @Component({
   components: {
     CanvasScrollport
@@ -54,13 +56,10 @@ export default class TilePalette extends TilesetBase {
   }
 
   public pointerDown(event: PointerEvent) {
-    const boundingRect = this.canvas.getBoundingClientRect(),
-      xScale = this.canvas.width / (boundingRect.right - boundingRect.left),
-      yScale = this.canvas.height / (boundingRect.bottom - boundingRect.top),
-      mouse: Point = getMouseCoor(event, this.canvas),
+    const mouse: Point = getMouseCoor(event, this.canvas),
       clickPt: Point = {
-        x: mouse.x * xScale + this.scrollRect.innerL,
-        y: mouse.y * yScale + this.scrollRect.innerT
+        x: mouse.x + this.scrollRect.innerL,
+        y: mouse.y + this.scrollRect.innerT
       };
 
     this.lastTilePt.x = Math.floor(clickPt.x / this.tileSize.scaledW);
@@ -81,13 +80,10 @@ export default class TilePalette extends TilesetBase {
   public pointerMove(event: PointerEvent) {
     event.preventDefault();
     if (this.isMouseDown) {
-      const boundingRect = this.canvas.getBoundingClientRect(),
-        xScale = this.canvas.width / (boundingRect.right - boundingRect.left),
-        yScale = this.canvas.height / (boundingRect.bottom - boundingRect.top),
-        mouse: Point = getMouseCoor(event, this.canvas),
+      const mouse: Point = getMouseCoor(event, this.canvas),
         clickPt: Point = {
-          x: mouse.x * xScale + this.scrollRect.innerL,
-          y: mouse.y * yScale + this.scrollRect.innerT
+          x: mouse.x + this.scrollRect.innerL,
+          y: mouse.y + this.scrollRect.innerT
         },
         tilePt: Point = {
           x: Math.floor(clickPt.x / this.tileSize.scaledW),
@@ -128,9 +124,9 @@ export default class TilePalette extends TilesetBase {
 
   public onWheel(event: WheelEvent) {
     if (event.deltaY > 0) {
-      this.scrollViewport(0, 20);
+      this.scrollViewport(0, WHEEL_SCROLL_SPEED);
     } else {
-      this.scrollViewport(0, -20);
+      this.scrollViewport(0, -WHEEL_SCROLL_SPEED);
     }
   }
 
