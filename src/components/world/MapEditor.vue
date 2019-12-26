@@ -45,13 +45,13 @@ const world = namespace("world");
 })
 export default class MapEditor extends MapBase {
   private baseCoor!: Rect;
+
   private lastDrawCoor: Point = { x: -1, y: -1 };
   private startDrawCoor: Point = { x: -1, y: -1 };
-
-  private hoverRect: Rect = { l: -1, r: -1, t: -1, b: -1 };
   private lastHoverRect: Rect = { l: -1, r: -1, t: -1, b: -1 };
 
   private isMouseDown: boolean = false;
+  private showHoverRect: boolean = true;
 
   private created() {
     this.baseCoor = {} as Rect;
@@ -67,7 +67,26 @@ export default class MapEditor extends MapBase {
         this.isMouseDown = false;
         this.mapStore.mapMutator.fill(tileDraw);
         break;
+
+      case ToolType.RECTANGLE:
+        this.showHoverRect = false;
+        this.mapStore.mapMutator.rectangle(tileDraw, this.startDrawCoor);
+        break;
     }
+  }
+
+  private releaseTool() {
+    switch (this.tilesetView.tool) {
+      case ToolType.RECTANGLE:
+        this.showHoverRect = true;
+        break;
+    }
+
+    this.isMouseDown = false;
+    this.lastDrawCoor.x = -1;
+    this.lastDrawCoor.y = -1;
+    this.startDrawCoor.x = -1;
+    this.startDrawCoor.y = -1;
   }
 
   private getSelectionCoorForMapCoor(
@@ -103,19 +122,6 @@ export default class MapEditor extends MapBase {
       tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
       section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
       tileSelection = this.tilesetView.tileSelection;
-
-    /*
-    this.baseCoor.l = mouse.x - this.mapOffset.x;
-    this.baseCoor.t = mouse.y - this.mapOffset.y;
-    this.baseCoor.r = 0;
-    this.baseCoor.b = 0;
-
-    const x =
-        Math.floor(this.baseCoor.l / this.tileSize.scaledW) +
-        this.tileDrawRect.tile.l,
-      y =
-        Math.floor(this.baseCoor.t / this.tileSize.scaledH) +
-        this.tileDrawRect.tile.t,*/
 
     if (this.startDrawCoor.x === -1) {
       this.startDrawCoor.x = tilePt.x;
@@ -257,21 +263,9 @@ export default class MapEditor extends MapBase {
   public pointerDown(event: PointerEvent) {
     switch (event.button) {
       case 0:
-        /*
-        if (this.clickScrollbars(event.clientX, event.clientY)) {
-          this.drawMap();
-          return;
-        }
-        */
-
         this.isMouseDown = true;
         this.mapStore.mapMutator.newChange();
         this.drawSelectedTiles(event);
-        break;
-
-      case 2:
-        this.mapStore.mapMutator.undo();
-
         break;
     }
 
@@ -279,26 +273,23 @@ export default class MapEditor extends MapBase {
   }
 
   public pointerUp(event: PointerEvent) {
-    this.isMouseDown = false;
-    this.lastDrawCoor.x = -1;
-    this.lastDrawCoor.y = -1;
-    this.startDrawCoor.x = -1;
-    this.startDrawCoor.y = -1;
+    this.releaseTool();
   }
 
   public pointerMove(event: PointerEvent) {
     if (this.isMouseDown) {
-      /*
-      console.log(
-        `Mouse has moved to ${event.clientX},${
-          event.clientY
-        } at ${performance.now()}`
-      );
-      */
-      this.drawSelectedTiles(event);
+      // Right-click
+      if (event.buttons & 2) {
+        this.releaseTool();
+        this.mapStore.mapMutator.undo();
+      } else {
+        this.drawSelectedTiles(event);
+      }
     }
 
-    this.drawHoverRect(event);
+    if (this.showHoverRect) {
+      this.drawHoverRect(event);
+    }
   }
 
   public contextMenu(event: MouseEvent) {

@@ -176,8 +176,6 @@ export default class MapBase extends CanvasBase {
     this.drawMap();
   }
 
-  protected drawLayer(rect: TileDrawRect, layer: number) {}
-
   public calculateCenterCoorOffset(): Point {
     const boundingRect = this.canvas.getBoundingClientRect();
 
@@ -324,7 +322,50 @@ export default class MapBase extends CanvasBase {
     }
   }
 
-  public drawTiles(tileChanges: TileChangeEntry[]) {
+  protected drawTiles(tileChanges: TileChangeEntry[]) {
+    if (!this.map || !this.image || !this.tileSize) {
+      return;
+    }
+
+    const map = this.map,
+      tileSize = this.tileSize;
+
+    this.mapOffset = this.calculateCenterCoorOffset();
+    this.tileDrawRect = this.calculateTileDrawRect(map, tileSize);
+
+    let tileDrawRect: TileDrawRect = this.calculateTileDrawRect(map, tileSize),
+      rect = tileDrawRect.tile,
+      k = 0,
+      l = 0,
+      sx: number = this.mapOffset.x,
+      sy: number = this.mapOffset.y,
+      mapBuf: number,
+      mapVal: number[],
+      tileIndex: number,
+      sectionNum: number;
+
+    for (const entry of tileChanges) {
+      if (
+        entry.x < rect.l ||
+        entry.x > rect.r ||
+        entry.y < rect.t ||
+        entry.y > rect.b
+      ) {
+        continue;
+      }
+
+      const drawPt = this.tileToCanvasCoor(entry.x, entry.y);
+
+      for (l = 0; l < MAX_LAYER; l++) {
+        mapBuf = map.layer[l].visibleData[entry.y * map.w + entry.x];
+        mapVal = unpackMapBuf(mapBuf);
+
+        this.drawTile(mapVal[0], mapVal[1], drawPt.x, drawPt.y);
+      }
+    }
+  }
+
+  public drawPreviewTiles(tileChanges: TileChangeEntry[]) {
     if (!this.map || !this.image || !this.tileSize) {
       return;
     }
@@ -357,36 +398,16 @@ export default class MapBase extends CanvasBase {
         continue;
       }
 
+      const drawPt = this.tileToCanvasCoor(entry.x, entry.y);
+
       for (l = 0; l < MAX_LAYER; l++) {
-        mapBuf = map.layer[entry.l].visibleData[entry.y * map.w + entry.x];
-        mapVal = unpackMapBuf(mapBuf);
-
-        tile = this.tileset.sections[mapVal[0]].tiles[mapVal[1]];
-
-        const x = entry.x - tileDrawRect.tile.l,
-          y = entry.y - tileDrawRect.tile.t;
-
-        if (Array.isArray(tile.t)) {
-          const len: number = tile.flen || tile.t.length;
-          let quarter: number = tile.quarter || 255;
-
-          for (k = 0; k < len; k++) {
-            this.image[mapVal[0]].drawSubTiles(
-              this.context,
-              this.mapOffset.x + x * tileSize.scaledW,
-              this.mapOffset.y + y * tileSize.scaledH,
-              tile.t[k],
-              quarter
-            );
-            quarter = quarter >> 4;
-          }
+        if (entry.l === l) {
+          mapVal = unpackMapBuf(entry.t);
+          this.drawTile(mapVal[0], mapVal[1], drawPt.x, drawPt.y);
         } else {
-          this.image[mapVal[0]].drawTile(
-            this.context,
-            this.mapOffset.x + x * tileSize.scaledW,
-            this.mapOffset.y + y * tileSize.scaledH,
-            tile.t as number
-          );
+          // mapBuf = map.layer[entry.l].visibleData[entry.y * map.w + entry.x];
+          // mapVal = unpackMapBuf(mapBuf);
+          // this.drawTile(mapVal[0], mapVal[1], drawPt.x, drawPt.y);
         }
       }
     }

@@ -3,13 +3,17 @@ import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calc
 import { Point } from '@/types/primitives';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { TemplateTileType } from '@/types/tileset';
+import { rectBetweenPts } from '@/lib/utils';
+import { ChangeRegistry } from './changeregistry';
 
 const MAX_ITERATIONS = 25000;
 
 export class MapMutator {
   private map!: TileMap;
-  private changes: TileChange[] = [];
+
   private mapUpdate: Function;
+
+  private changeRegistry: ChangeRegistry = new ChangeRegistry();
 
   constructor(mapUpdate: Function) {
     this.mapUpdate = mapUpdate;
@@ -17,9 +21,10 @@ export class MapMutator {
 
   set tileMap(map: TileMap) {
     this.map = map;
+    this.changeRegistry.tileMap = map;
   }
 
-  private correctSurroundingAutotiles(points: Point[]) {
+  private correctSurroundingAutotiles(points: Point[], preview: boolean = false) {
     const w = this.map.w,
       h = this.map.h;
 
@@ -48,52 +53,27 @@ export class MapMutator {
       });
     }
 
-    this.applyTileChanges(changeList);
-  }
-
-  private applyTileChanges(changeList: TileChangeEntry[]) {
-    if (this.changes.length < 1) {
-      return;
-    }
-
-    for (const change of changeList) {
-      const offset: number = this.map.w * change.y + change.x,
-        changes = this.changes[this.changes.length - 1],
-        layer = this.map.layer[change.l];
-
-      change.pt = layer.templateData[offset];
-      change.pv = layer.visibleData[offset];
-      layer.templateData[offset] = change.t;
-      layer.visibleData[offset] = change.v;
-
-      changes.entries.push(change);
-    }
+    this.changeRegistry.addChanges(changeList);
   }
 
   public newChange() {
-    this.changes.push({
-      entries: [],
-    });
+    this.changeRegistry.newChangeList();
   }
 
   public pencil(tileDraw: TileDraw) {
     const w = this.map.w,
       h = this.map.h,
-      surroundingTiles: Point[] = [],
-      changeListStart = this.changes[this.changes.length - 1].entries.length;
+      changeList = this.changeRegistry.getActiveChangeList(),
+      changeListStart = changeList.entries.length;
 
     for (const [i, drawData] of tileDraw.data.entries()) {
       const layer = this.map.layer[tileDraw.l],
-        section = this.map.tileset.sections[drawData.s],
-        templateTile = section.templateTiles[drawData.t],
         templateTileValue = packMapBuf(drawData.s, drawData.t),
         px = tileDraw.x + (i % tileDraw.w),
-        py = tileDraw.y + (Math.floor(i / tileDraw.w));
+        py = tileDraw.y + (Math.floor(i / tileDraw.w)),
+        tileValue = calculateTileValue(layer, this.map.tileset, px, py, w, h, templateTileValue);
 
-      let tileValue;
-
-      tileValue = calculateTileValue(layer, this.map.tileset, px, py, w, h, templateTileValue);
-      this.applyTileChanges([{
+      this.changeRegistry.addChanges([{
         x: px,
         y: py,
         l: tileDraw.l,
@@ -102,21 +82,18 @@ export class MapMutator {
         pt: 0,
         pv: 0
       }]);
-
-
     }
 
     if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
       this.correctSurroundingAutotiles(getSurroundingTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, tileDraw.l));
     }
 
-    this.mapUpdate(this.changes[this.changes.length - 1].entries.slice(changeListStart));
+    this.mapUpdate(changeList.entries.slice(changeListStart));
   }
 
   public fill(tileDraw: TileDraw) {
     const w = this.map.w,
-      h = this.map.h,
-      changeListStart = this.changes[this.changes.length - 1].entries.length;
+      h = this.map.h;
 
     for (const drawData of tileDraw.data) {
       const layer = this.map.layer[tileDraw.l];
@@ -157,7 +134,7 @@ export class MapMutator {
           while (pw < w && layer.templateData[pt.y * w + pw] === repTTV) {
             const tileValue = calculateTileValue(layer, this.map.tileset, pt.x, pt.y, w, h, templateTileValue);
 
-            this.applyTileChanges([{
+            this.changeRegistry.addChanges([{
               x: pw,
               y: pt.y,
               l: tileDraw.l,
@@ -192,7 +169,7 @@ export class MapMutator {
             pw++;
           }
 
-          this.correctSurroundingAutotiles(surroundingTiles)
+          this.correctSurroundingAutotiles(surroundingTiles);
         }
       }
 
@@ -202,22 +179,54 @@ export class MapMutator {
     this.mapUpdate();
   }
 
+  public rectangle(tileDraw: TileDraw, drawTo: Point) {
+    const w = this.map.w,
+      h = this.map.h,
+      layer = this.map.layer[tileDraw.l],
+      rect = rectBetweenPts({ x: tileDraw.x, y: tileDraw.y }, drawTo),
+      lastChanges = this.changeRegistry.revertLastChangeList();
+
+    this.changeRegistry.newChangeList();
+
+    for (let y = rect.t; y <= rect.b; y++) {
+      for (let x = rect.l; x <= rect.r; x++) {
+
+        const templateTileValue = packMapBuf(tileDraw.data[0].s, tileDraw.data[0].t),
+          tileValue = calculateTileValue(layer, this.map.tileset, x, y, w, h, templateTileValue);
+
+        this.changeRegistry.addChanges([{
+          x,
+          y,
+          l: tileDraw.l,
+          v: tileValue,
+          t: templateTileValue,
+          pv: 0,
+          pt: 0
+        }]);
+
+        if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
+          this.correctSurroundingAutotiles(getSurroundingTiles(x, y, tileDraw.w, tileDraw.h, w, h, tileDraw.l));
+        }
+      }
+
+    }
+
+    /* Push the reverted changes from the last view of rectangle to the map editor to be drawn */
+    if (lastChanges) {
+      this.mapUpdate(lastChanges.entries);
+    }
+
+    this.mapUpdate(this.changeRegistry.getActiveChangeList().entries);
+  }
+
   public undo() {
-    if (this.changes.length < 1) {
+    const lastChanges = this.changeRegistry.revertLastChangeList();
+
+    if (!lastChanges) {
       return;
     }
 
-    const lastChanges = this.changes.pop();
-
-    for (let i = lastChanges!.entries.length - 1; i >= 0; i--) {
-      const change = lastChanges!.entries[i];
-      const offset: number = this.map.w * change.y + change.x;
-      const layer = this.map.layer[change.l];
-      layer.templateData[offset] = change.pt;
-      layer.visibleData[offset] = change.pv;
-    }
-
-    this.mapUpdate(lastChanges);
+    this.mapUpdate(lastChanges.entries);
   }
 
 

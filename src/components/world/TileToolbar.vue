@@ -38,6 +38,11 @@ export default class TileToolbar extends Vue {
       id: 1,
       label: "Fill",
       icon: "format-color-fill-icon"
+    },
+    {
+      id: 2,
+      label: "Rectangle",
+      icon: "shape-rectangle-plus"
     }
   ];
 

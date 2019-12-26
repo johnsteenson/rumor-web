@@ -1,4 +1,4 @@
-import { TileMap, TileChange } from '@/types/map';
+import { TileMap, TileChange, TileChangeEntry } from '@/types/map';
 
 import { MapMutator } from './mutations';
 
@@ -16,7 +16,7 @@ export class MapStore {
     this._mapMutator = new MapMutator(this.mapUpdate.bind(this));
   }
 
-  private mapUpdate(changes: TileChange) {
+  private mapUpdate(changes: TileChangeEntry[]) {
     this.onMapUpdateCallback(changes);
   }
 

@@ -15,13 +15,15 @@ import BrushIcon from "vue-material-design-icons/Brush.vue";
 import FormatColorFillIcon from "vue-material-design-icons/FormatColorFill.vue";
 import Numeric1BoxMultiple from "vue-material-design-icons/Numeric1BoxMultiple.vue";
 import Numeric2BoxMultiple from "vue-material-design-icons/Numeric2BoxMultiple.vue";
+import ShapeRectanglePlus from "vue-material-design-icons/ShapeRectanglePlus.vue";
 
 @Component({
   components: {
     BrushIcon,
     FormatColorFillIcon,
     Numeric1BoxMultiple,
-    Numeric2BoxMultiple
+    Numeric2BoxMultiple,
+    ShapeRectanglePlus
   }
 })
 export default class ToolbarButton extends Vue {
