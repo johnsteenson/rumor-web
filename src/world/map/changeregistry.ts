@@ -1,10 +1,14 @@
 import { TileMap, TileChangeEntry, TileChange } from '@/types/map';
+import { CircularBuffer } from '@/types/circularBuffer';
+import { Nullable } from '@/types/primitives';
+
+const UNDO_BUFFER_SIZE = 5;
 
 export class ChangeRegistry {
 
   private map!: TileMap;
 
-  private changes: TileChange[] = [];
+  private changes: CircularBuffer<TileChange> = new CircularBuffer(UNDO_BUFFER_SIZE);
 
   set tileMap(map: TileMap) {
     this.map = map;
@@ -16,18 +20,19 @@ export class ChangeRegistry {
     });
   }
 
-  public getActiveChangeList(): TileChange {
-    return this.changes[this.changes.length - 1];
+  public getActiveChangeList(): Nullable<TileChange> {
+    return this.changes.top();
   }
 
   public addChanges(changeList: TileChangeEntry[]) {
-    if (this.changes.length < 1) {
+    const changes = this.changes.top();
+
+    if (!changes) {
       return;
     }
 
     for (const change of changeList) {
       const offset: number = this.map.w * change.y + change.x,
-        changes = this.changes[this.changes.length - 1],
         layer = this.map.layer[change.l];
 
       change.pt = layer.templateData[offset];
@@ -39,12 +44,12 @@ export class ChangeRegistry {
     }
   }
 
-  public revertLastChangeList(): TileChange | null {
-    if (this.changes.length < 1) {
+  public revertLastChangeList(): Nullable<TileChange> {
+    const lastChangeList = this.changes.pop();
+
+    if (!lastChangeList) {
       return null;
     }
-
-    const lastChangeList: TileChange = this.changes.pop() as TileChange;
 
     for (let i = lastChangeList.entries.length - 1; i >= 0; i--) {
       const change = lastChangeList.entries[i];

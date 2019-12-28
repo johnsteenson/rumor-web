@@ -4,7 +4,7 @@ import { Point } from '@/types/primitives';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { TemplateTileType } from '@/types/tileset';
 import { rectBetweenPts } from '@/lib/utils';
-import { ChangeRegistry } from './changeregistry';
+import { ChangeRegistry } from './changeRegistry';
 
 const MAX_ITERATIONS = 25000;
 
@@ -63,7 +63,7 @@ export class MapMutator {
   public pencil(tileDraw: TileDraw) {
     const w = this.map.w,
       h = this.map.h,
-      changeList = this.changeRegistry.getActiveChangeList(),
+      changeList = this.changeRegistry.getActiveChangeList()!,
       changeListStart = changeList.entries.length;
 
     for (const [i, drawData] of tileDraw.data.entries()) {
@@ -188,8 +188,8 @@ export class MapMutator {
 
     this.changeRegistry.newChangeList();
 
-    for (let y = rect.t; y <= rect.b; y++) {
-      for (let x = rect.l; x <= rect.r; x++) {
+    for (let y = rect.t; y < rect.b; y++) {
+      for (let x = rect.l; x < rect.r; x++) {
 
         const templateTileValue = packMapBuf(tileDraw.data[0].s, tileDraw.data[0].t),
           tileValue = calculateTileValue(layer, this.map.tileset, x, y, w, h, templateTileValue);
@@ -216,7 +216,7 @@ export class MapMutator {
       this.mapUpdate(lastChanges.entries);
     }
 
-    this.mapUpdate(this.changeRegistry.getActiveChangeList().entries);
+    this.mapUpdate(this.changeRegistry.getActiveChangeList()!.entries);
   }
 
   public undo() {

@@ -1,5 +1,5 @@
 <template>
-  <div :class="[classSet, 'toolbar-bg']" @click="selected">
+  <div :class="[classSet, 'toolbar-bg']" @pointerdown="selected" @pointerup="released">
     <component :is="item.icon" />
   </div>
 </template>
@@ -16,6 +16,7 @@ import FormatColorFillIcon from "vue-material-design-icons/FormatColorFill.vue";
 import Numeric1BoxMultiple from "vue-material-design-icons/Numeric1BoxMultiple.vue";
 import Numeric2BoxMultiple from "vue-material-design-icons/Numeric2BoxMultiple.vue";
 import ShapeRectanglePlus from "vue-material-design-icons/ShapeRectanglePlus.vue";
+import Undo from "vue-material-design-icons/Undo.vue";
 
 @Component({
   components: {
@@ -23,7 +24,8 @@ import ShapeRectanglePlus from "vue-material-design-icons/ShapeRectanglePlus.vue
     FormatColorFillIcon,
     Numeric1BoxMultiple,
     Numeric2BoxMultiple,
-    ShapeRectanglePlus
+    ShapeRectanglePlus,
+    Undo
   }
 })
 export default class ToolbarButton extends Vue {
@@ -51,6 +53,10 @@ export default class ToolbarButton extends Vue {
 
   public selected() {
     this.$emit("selected", this.item);
+  }
+
+  public released() {
+    this.$emit("released", this.item);
   }
 }
 </script>
