@@ -1,9 +1,9 @@
 import { TileMap, TileChange, TileDraw, TileChangeEntry } from "@/types/map";
 import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue, getSurroundingTiles } from '@/lib/world/autotile';
-import { Point } from '@/types/primitives';
+import { Point } from '@/types/geometry';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { TemplateTileType } from '@/types/tileset';
-import { rectBetweenPts } from '@/lib/utils';
+import { createRectFromPts } from '@/lib/geometry';
 import { ChangeRegistry } from './changeRegistry';
 
 const MAX_ITERATIONS = 25000;
@@ -183,7 +183,7 @@ export class MapMutator {
     const w = this.map.w,
       h = this.map.h,
       layer = this.map.layer[tileDraw.l],
-      rect = rectBetweenPts({ x: tileDraw.x, y: tileDraw.y }, drawTo),
+      rect = createRectFromPts({ x: tileDraw.x, y: tileDraw.y }, drawTo),
       lastChanges = this.changeRegistry.revertLastChangeList();
 
     this.changeRegistry.newChangeList();

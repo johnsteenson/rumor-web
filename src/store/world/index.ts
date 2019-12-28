@@ -4,10 +4,7 @@ import { actions } from './actions';
 import { mutations } from './mutations';
 import { WorldState } from './types';
 import { RootState } from '../types';
-import { TileMap, MapLayer, ToolType, TileChange } from '@/types/map';
-import { createMap } from '@/lib/world/tilemap';
-// import { mapTileset } from '@/lib/tilesetUtils';
-import { Tileset } from '@/types/tileset';
+import { ToolType } from '@/types/map';
 
 const namespaced: boolean = true,
   state: WorldState = {

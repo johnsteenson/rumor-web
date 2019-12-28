@@ -3,7 +3,8 @@ import { WorldState } from './types';
 import { RootState } from '../types';
 
 import { Tileset, TilesetView } from '@/types/tileset';
-import { Nullable, TileSize } from '@/types/primitives';
+import { TileSize } from '@/types/geometry';
+import { Nullable } from '@/types/primitives'
 import { MapView, ToolType } from '@/types/map';
 
 import { mapStore } from '@/world';

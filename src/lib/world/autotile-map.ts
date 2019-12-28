@@ -1,6 +1,6 @@
 /*
    This code contains the mappings of the adjacency edges, which is auto-generated from a script.
-   Do not manually edit thie file.
+   Do not manually edit this file.
 */
 
 export const WATER_AUTOTILE_MAP_MASK: Record<number, number> = {

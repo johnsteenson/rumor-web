@@ -7,7 +7,7 @@
 <script lang="ts">
 import { ImageManager } from "@/canvas/imageManager";
 import { Component, Prop, Vue, Watch, Inject } from "vue-property-decorator";
-import { TileSize, Rect, Point, TileDrawRect } from "@/types/primitives";
+import { TileSize, Rect, Point, TileDrawRect } from "@/types/geometry";
 import {
   MapView,
   TileMap,
@@ -265,24 +265,36 @@ export default class MapBase extends CanvasBase {
     sx: number,
     sy: number
   ) {
-    const tile = this.tileset.sections[sectionId].tiles[tileId];
+    try {
+      const tile = this.tileset.sections[sectionId].tiles[tileId];
 
-    if (Array.isArray(tile.t)) {
-      const len: number = tile.flen || tile.t.length;
-      let quarter: number = tile.quarter || 255;
+      if (Array.isArray(tile.t)) {
+        const len: number = tile.flen || tile.t.length;
+        let quarter: number = tile.quarter || 255;
 
-      for (let k = 0; k < len; k++) {
-        this.image[sectionId].drawSubTiles(
-          this.context,
-          sx,
-          sy,
-          tile.t[k],
-          quarter
-        );
-        quarter = quarter >> 4;
+        for (let k = 0; k < len; k++) {
+          this.image[sectionId].drawSubTiles(
+            this.context,
+            sx,
+            sy,
+            tile.t[k],
+            quarter
+          );
+          quarter = quarter >> 4;
+        }
+      } else {
+        this.image[sectionId].drawTile(this.context, sx, sy, tile.t as number);
       }
-    } else {
-      this.image[sectionId].drawTile(this.context, sx, sy, tile.t as number);
+    } catch (error) {
+      console.log(
+        "ERROR DRAWING TILE: ",
+        this.image,
+        sectionId,
+        tileId,
+        sx,
+        sy
+      );
+      console.error(error);
     }
   }
 
@@ -361,54 +373,6 @@ export default class MapBase extends CanvasBase {
         mapVal = unpackMapBuf(mapBuf);
 
         this.drawTile(mapVal[0], mapVal[1], drawPt.x, drawPt.y);
-      }
-    }
-  }
-
-  public drawPreviewTiles(tileChanges: TileChangeEntry[]) {
-    if (!this.map || !this.image || !this.tileSize) {
-      return;
-    }
-
-    const map = this.map,
-      tileSize = this.tileSize;
-
-    this.mapOffset = this.calculateCenterCoorOffset();
-    this.tileDrawRect = this.calculateTileDrawRect(map, tileSize);
-
-    let tileDrawRect: TileDrawRect = this.calculateTileDrawRect(map, tileSize),
-      rect = tileDrawRect.tile,
-      k = 0,
-      l = 0,
-      sx: number = this.mapOffset.x,
-      sy: number = this.mapOffset.y,
-      mapBuf: number,
-      mapVal: number[],
-      tileIndex: number,
-      sectionNum: number,
-      tile: Tile;
-
-    for (const entry of tileChanges) {
-      if (
-        entry.x < rect.l ||
-        entry.x > rect.r ||
-        entry.y < rect.t ||
-        entry.y > rect.b
-      ) {
-        continue;
-      }
-
-      const drawPt = this.tileToCanvasCoor(entry.x, entry.y);
-
-      for (l = 0; l < MAX_LAYER; l++) {
-        if (entry.l === l) {
-          mapVal = unpackMapBuf(entry.t);
-          this.drawTile(mapVal[0], mapVal[1], drawPt.x, drawPt.y);
-        } else {
-          // mapBuf = map.layer[entry.l].visibleData[entry.y * map.w + entry.x];
-          // mapVal = unpackMapBuf(mapBuf);
-          // this.drawTile(mapVal[0], mapVal[1], drawPt.x, drawPt.y);
-        }
       }
     }
   }

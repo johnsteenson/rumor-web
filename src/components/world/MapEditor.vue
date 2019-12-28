@@ -21,7 +21,8 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch, Inject } from "vue-property-decorator";
-import { TileSize, Rect, Point } from "@/types/primitives";
+import { TileSize, Rect, Point } from "@/types/geometry";
+import { isRectEqual, createRectFromPts } from "@/lib/geometry";
 import {
   MapView,
   TileChangeEntry,
@@ -40,17 +41,24 @@ import { getMouseCoor } from "../../canvas/utils";
 
 const world = namespace("world");
 
+enum MapPointerMode {
+  OFF = 0,
+  DRAWING,
+  SCROLLING,
+  COPYING
+}
+
 @Component({
   components: { CanvasScrollport }
 })
 export default class MapEditor extends MapBase {
   private baseCoor!: Rect;
 
-  private lastDrawCoor: Point = { x: -1, y: -1 };
-  private startDrawCoor: Point = { x: -1, y: -1 };
+  private lastDrawTileCoor: Point = { x: -1, y: -1 };
+  private startDrawTileCoor: Point = { x: -1, y: -1 };
   private lastHoverRect: Rect = { l: -1, r: -1, t: -1, b: -1 };
 
-  private isMouseDown: boolean = false;
+  private pointerMode: MapPointerMode = MapPointerMode.OFF;
   private showHoverRect: boolean = true;
 
   private created() {
@@ -64,13 +72,13 @@ export default class MapEditor extends MapBase {
         break;
 
       case ToolType.FILL:
-        this.isMouseDown = false;
+        this.pointerMode = MapPointerMode.OFF;
         this.mapStore.mapMutator.fill(tileDraw);
         break;
 
       case ToolType.RECTANGLE:
         this.showHoverRect = false;
-        this.mapStore.mapMutator.rectangle(tileDraw, this.startDrawCoor);
+        this.mapStore.mapMutator.rectangle(tileDraw, this.startDrawTileCoor);
         break;
     }
   }
@@ -82,11 +90,11 @@ export default class MapEditor extends MapBase {
         break;
     }
 
-    this.isMouseDown = false;
-    this.lastDrawCoor.x = -1;
-    this.lastDrawCoor.y = -1;
-    this.startDrawCoor.x = -1;
-    this.startDrawCoor.y = -1;
+    this.pointerMode = MapPointerMode.OFF;
+    this.lastDrawTileCoor.x = -1;
+    this.lastDrawTileCoor.y = -1;
+    this.startDrawTileCoor.x = -1;
+    this.startDrawTileCoor.y = -1;
   }
 
   private getSelectionCoorForMapCoor(
@@ -96,10 +104,10 @@ export default class MapEditor extends MapBase {
     selY: number
   ): number {
     let shiftSelX =
-        (baseX + selX - this.startDrawCoor.x) %
+        (baseX + selX - this.startDrawTileCoor.x) %
         this.tilesetView.tileSelection.w,
       shiftSelY =
-        (baseY + selY - this.startDrawCoor.y) %
+        (baseY + selY - this.startDrawTileCoor.y) %
         this.tilesetView.tileSelection.h;
 
     /* Loop around to end of selection rect if moving negatively along axis (left or up) */
@@ -116,72 +124,27 @@ export default class MapEditor extends MapBase {
     ];
   }
 
-  public async drawSelectedTiles(event: PointerEvent) {
+  public drawSelectedTiles(event: PointerEvent) {
     const mouse = getMouseCoor(event, this.canvas),
       map = this.map,
       tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
       section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
       tileSelection = this.tilesetView.tileSelection;
 
-    if (this.startDrawCoor.x === -1) {
-      this.startDrawCoor.x = tilePt.x;
-      this.startDrawCoor.y = tilePt.y;
+    if (this.startDrawTileCoor.x === -1) {
+      this.startDrawTileCoor.x = tilePt.x;
+      this.startDrawTileCoor.y = tilePt.y;
     }
 
-    if (this.lastDrawCoor.x === tilePt.x && this.lastDrawCoor.y === tilePt.y) {
+    if (
+      this.lastDrawTileCoor.x === tilePt.x &&
+      this.lastDrawTileCoor.y === tilePt.y
+    ) {
       return;
     }
 
-    /* TODO Make interpolation work with multiple tiles.  This may no longer be needed now that drawing has considerably
-       sped up after only drawing the tiles changed */
-    /*
-    if (this.lastDrawCoor.x > -1 && Math.abs(this.lastDrawCoor.x - x) > 1) {
-      for (
-        let fx = Math.min(this.lastDrawCoor.x, x);
-        fx < Math.max(this.lastDrawCoor.x, x);
-        fx++
-      ) {
-        this.applyDraw({
-          x: fx,
-          y,
-          w: 1,
-          h: 1,
-          l: this.tilesetView.curLayer,
-          data: [
-            {
-              s: this.tilesetView.curSection,
-              t: tileIndex
-            }
-          ]
-        });
-      }
-    }
-
-    if (this.lastDrawCoor.y > -1 && Math.abs(this.lastDrawCoor.y - y) > 1) {
-      for (
-        let fy = Math.min(this.lastDrawCoor.y, y);
-        fy < Math.max(this.lastDrawCoor.y, y);
-        fy++
-      ) {
-        this.applyDraw({
-          x,
-          y: fy,
-          w: 1,
-          h: 1,
-          l: this.tilesetView.curLayer,
-          data: [
-            {
-              s: this.tilesetView.curSection,
-              t: tileIndex
-            }
-          ]
-        });
-      }
-    }
-    */
-
-    this.lastDrawCoor.x = tilePt.x;
-    this.lastDrawCoor.y = tilePt.y;
+    this.lastDrawTileCoor.x = tilePt.x;
+    this.lastDrawTileCoor.y = tilePt.y;
 
     /* TODO For now, redraw all the tiles when placing multiple tiles.  If it's too slow, I'll do a check to not 
        redraw any tiles inside of the last drawn rect */
@@ -214,23 +177,31 @@ export default class MapEditor extends MapBase {
     });
   }
 
+  public dragCopy(event: PointerEvent) {}
+
   public drawHoverRect(event: PointerEvent) {
     const mouse = getMouseCoor(event, this.canvas),
       tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
-      tileSelection = this.tilesetView.tileSelection,
-      hoverRect: Rect = {
-        l: tilePt.x,
-        t: tilePt.y,
-        r: tilePt.x + tileSelection.w,
-        b: tilePt.y + tileSelection.h
-      };
+      tileSelection = this.tilesetView.tileSelection;
 
-    if (
-      hoverRect.l === this.lastHoverRect.l &&
-      hoverRect.t === this.lastHoverRect.t &&
-      hoverRect.r === this.lastHoverRect.r &&
-      hoverRect.b === this.lastHoverRect.b
-    ) {
+    let hoverRect: Rect;
+
+    switch (this.pointerMode) {
+      case MapPointerMode.COPYING:
+        hoverRect = createRectFromPts(tilePt, this.startDrawTileCoor);
+
+        break;
+      default:
+        hoverRect = {
+          l: tilePt.x,
+          t: tilePt.y,
+          r: tilePt.x + tileSelection.w,
+          b: tilePt.y + tileSelection.h
+        };
+        break;
+    }
+
+    if (!isRectEqual(hoverRect, this.lastHoverRect)) {
       return;
     }
 
@@ -263,7 +234,7 @@ export default class MapEditor extends MapBase {
   public pointerDown(event: PointerEvent) {
     switch (event.button) {
       case 0:
-        this.isMouseDown = true;
+        this.pointerMode = MapPointerMode.DRAWING;
         this.mapStore.mapMutator.newChange();
         this.drawSelectedTiles(event);
         break;
@@ -277,14 +248,17 @@ export default class MapEditor extends MapBase {
   }
 
   public pointerMove(event: PointerEvent) {
-    if (this.isMouseDown) {
-      // Right-click
-      if (event.buttons & 2) {
-        this.releaseTool();
-        this.mapStore.mapMutator.undo();
-      } else {
-        this.drawSelectedTiles(event);
-      }
+    switch (this.pointerMode) {
+      case MapPointerMode.DRAWING:
+        // Check for right-click undo
+        if (event.buttons & 2) {
+          this.releaseTool();
+          this.mapStore.mapMutator.undo();
+        } else {
+          this.drawSelectedTiles(event);
+        }
+
+        break;
     }
 
     if (this.showHoverRect) {

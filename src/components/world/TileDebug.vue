@@ -15,7 +15,7 @@ import {
   TemplateTile,
   Tile
 } from "@/types/tileset";
-import { TileSize, Rect } from "@/types/primitives";
+import { TileSize, Rect } from "@/types/geometry";
 import TilesetBase from "./TilesetBase.vue";
 import { TileSelection } from "../../types/map";
 

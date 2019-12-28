@@ -1,4 +1,4 @@
-import { TileSize } from '@/types/primitives';
+import { TileSize } from '@/types/geometry';
 
 export class TileImage {
   private canvas: HTMLCanvasElement;
@@ -34,6 +34,11 @@ export class TileImage {
   public drawTile(destCtx: CanvasRenderingContext2D, x: number, y: number, i: number) {
     const sx: number = Math.floor((i % this.tilesPerRow) * this.tileSize.scaledW),
       sy: number = Math.floor(Math.floor(i / this.tilesPerRow) * this.tileSize.scaledH);
+
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(this.tileSize.scaledW)) {
+      console.log('DRAWING NON-INTEGER', x, y);
+    }
+
     destCtx.drawImage(
       this.canvas, sx, sy, this.tileSize.scaledW, this.tileSize.scaledH,
       x, y, this.tileSize.scaledW, this.tileSize.scaledH,

@@ -1,4 +1,4 @@
-import { TileSize } from '@/types/primitives';
+import { TileSize } from '@/types/geometry';
 import { TileImage } from '@/canvas/tileImage';
 
 export class ImageManager {

@@ -1,4 +1,4 @@
-import { Dimension } from '@/types/primitives';
+import { Dimension } from '@/types/geometry';
 import { TileMap, TileChange, ToolType, TileSelection } from '@/types/map';
 import { Tileset, Tile } from '@/types/tileset';
 

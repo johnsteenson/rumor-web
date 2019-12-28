@@ -10,7 +10,7 @@
 import { Component, Prop, Vue, Watch, Emit } from "vue-property-decorator";
 import { clampBetween } from "@/lib/utils";
 import { namespace } from "vuex-class";
-import { ScrollRect, Dimension, Point, Axis } from "../../types/primitives";
+import { ScrollRect, Dimension, Point, Axis } from "@/types/geometry";
 
 import {
   getLeftArrow,

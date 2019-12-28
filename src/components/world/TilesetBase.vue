@@ -17,7 +17,7 @@ import {
   TemplateTile
 } from "@/types/tileset";
 import { TileImage } from "@/canvas/tileImage";
-import { Rect, TileSize, TileDrawRect, Point } from "@/types/primitives";
+import { Rect, TileSize, TileDrawRect, Point } from "@/types/geometry";
 import { TileSelection } from "../../types/map";
 
 import CanvasBase from "./CanvasBase.vue";

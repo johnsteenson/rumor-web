@@ -1,4 +1,4 @@
-import { Dimension, TileSize } from './primitives';
+import { Dimension, TileSize } from './geometry';
 import { ToolType, TileSelection } from './map';
 
 export enum TileType {

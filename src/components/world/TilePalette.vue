@@ -24,7 +24,7 @@
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { namespace } from "vuex-class";
 import { TilesetView } from "@/types/tileset";
-import { Axis, TileSize, Rect, Point } from "@/types/primitives";
+import { Axis, TileSize, Rect, Point } from "@/types/geometry";
 import TilesetBase from "./TilesetBase.vue";
 import { TileSelection } from "../../types/map";
 

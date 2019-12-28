@@ -1,5 +1,5 @@
 import { Tileset, TemplateTile } from './tileset';
-import { TileSize } from './primitives';
+import { TileSize } from './geometry';
 
 export enum ToolType {
   PENCIL = 0,

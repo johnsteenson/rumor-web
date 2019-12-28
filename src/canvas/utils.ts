@@ -1,4 +1,4 @@
-import { Point } from '@/types/primitives';
+import { Point } from '@/types/geometry';
 
 const BOX_WIDTH = 16;
 

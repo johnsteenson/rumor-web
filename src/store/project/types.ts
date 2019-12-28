@@ -1,4 +1,4 @@
-import {Dimension} from '@/types/primitives';
+import { Dimension } from '@/types/geometry';
 
 export interface ProjectState {
   title: string;

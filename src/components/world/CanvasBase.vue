@@ -6,13 +6,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
-import {
-  TileSize,
-  Rect,
-  Point,
-  Dimension,
-  ScrollRect
-} from "@/types/primitives";
+import { TileSize, Rect, Point, Dimension, ScrollRect } from "@/types/geometry";
 
 import {
   getLeftArrow,

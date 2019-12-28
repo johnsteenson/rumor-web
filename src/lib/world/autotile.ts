@@ -3,7 +3,7 @@ import { TemplateTileType, Tileset } from '@/types/tileset';
 import { RECT_AUTOTILE_MAP, RECT_AUTOTILE_MAP_MASK, WATER_AUTOTILE_MAP, WATER_AUTOTILE_MAP_MASK } from './autotile-map';
 import * as tilemap from './tilemap';
 import * as tilesetUtils from './tileset';
-import { Point } from '@/types/primitives';
+import { Point } from '@/types/geometry';
 
 const SAME_TILE_N = 1024,
   SAME_TILE_W = 256,
