@@ -11,6 +11,7 @@ export interface TileSelection {
   w: number;
   h: number;
   tileIndices: number[];
+  fromMap?: boolean;
 }
 
 export interface MapLayer {

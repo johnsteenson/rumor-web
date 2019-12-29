@@ -5,13 +5,23 @@
         <TileToolbar />
       </div>
       <div class="world-tile-selector">
-        <TilePalette :tilesetView="tilesetView" @tile-selected="tileSelected" :hideHScroll="true"></TilePalette>
+        <TilePalette
+          :tilesetView="tilesetView"
+          :toolView="toolView"
+          :hideHScroll="true"
+          @tileSelected="tileSelected"
+        ></TilePalette>
       </div>
 
       <div class="world-map-selector">Map Selector goes here</div>
 
       <div class="world-map-editor">
-        <MapEditor :useMapStore="true" :tilesetView="tilesetView"></MapEditor>
+        <MapEditor
+          :useMapStore="true"
+          :toolView="toolView"
+          :tilesetView="tilesetView"
+          @tileSelected="tileSelected"
+        ></MapEditor>
       </div>
     </div>
   </div>
@@ -31,8 +41,8 @@ import MapEditor from "@/components/world/MapEditor.vue";
 import TilePalette from "@/components/world/TilePalette.vue";
 import TileDebug from "@/components/world/TileDebug.vue";
 import TileToolbar from "@/components/world/TileToolbar.vue";
-import { Tileset, TilesetView } from "@/types/tileset";
-import { MapView } from "../types/map";
+import { Tileset, TilesetView, ToolView } from "@/types/tileset";
+import { MapView, TileSelection } from "../types/map";
 
 import { mapStore } from "@/world";
 
@@ -47,15 +57,15 @@ const world = namespace("world");
   }
 })
 export default class World extends Vue {
-  @Getter("getTileset", { namespace: "world" }) tileset!: Tileset;
-
   @world.Getter("getTilesetView") tilesetView!: TilesetView;
+
+  @world.Getter("getToolView") toolView!: ToolView;
 
   @world.Mutation("selectTileIndices") selectTileIndices: any;
 
   @Provide("mapStore") store = mapStore;
 
-  tileSelected(selectedTileIndices: number[]) {
+  tileSelected(selectedTileIndices: TileSelection) {
     this.selectTileIndices(selectedTileIndices);
   }
 }

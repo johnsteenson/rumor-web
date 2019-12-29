@@ -204,3 +204,15 @@ export function getSurroundingTiles(x: number, y: number, w: number, h: number, 
 
   return changes;
 }
+
+export function getAllTiles(x: number, y: number, w: number, h: number, mapW: number, mapH: number, l: number): Point[] {
+  const changes: Point[] = getSurroundingTiles(x, y, w, h, mapW, mapH, l);
+
+  for (let py = y; py < y + h; py++) {
+    for (let px = x; px < x + w; px++) {
+      changes.push({ x: px, y: py, l });
+    }
+  }
+
+  return changes;
+}

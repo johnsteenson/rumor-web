@@ -21,9 +21,9 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { namespace } from "vuex-class";
-import { TilesetView } from "@/types/tileset";
+import { TilesetView, ToolView } from "@/types/tileset";
 import { Axis, TileSize, Rect, Point } from "@/types/geometry";
 import TilesetBase from "./TilesetBase.vue";
 import { TileSelection } from "../../types/map";
@@ -46,6 +46,16 @@ export default class TilePalette extends TilesetBase {
   private baseCoor = {} as Rect;
   private lastTilePt: Point = { x: -1, y: -1 };
   private isMouseDown: boolean = false;
+
+  @Prop() protected toolView!: ToolView;
+
+  @Watch("toolView", { immediate: true, deep: false }) toolChange(
+    view: ToolView
+  ) {
+    this.$nextTick(() => {
+      this.draw();
+    });
+  }
 
   public mounted() {
     registerWindowEvent("wheel", this.onWheel.bind(this));
@@ -74,7 +84,7 @@ export default class TilePalette extends TilesetBase {
 
     this.isMouseDown = true;
 
-    this.$emit("tile-selected", tileSelection);
+    this.$emit("tileSelected", tileSelection);
   }
 
   public pointerMove(event: PointerEvent) {
@@ -110,7 +120,7 @@ export default class TilePalette extends TilesetBase {
       }
 
       const tileSelection = this.createSelectionFromRect(selCoor);
-      this.$emit("tile-selected", tileSelection);
+      this.$emit("tileSelected", tileSelection);
     }
   }
 
@@ -150,7 +160,8 @@ export default class TilePalette extends TilesetBase {
     return {
       w: rect.r - rect.l,
       h: rect.b - rect.t,
-      tileIndices
+      tileIndices,
+      fromMap: false
     };
   }
 
@@ -188,8 +199,10 @@ export default class TilePalette extends TilesetBase {
   public draw() {
     this.drawTiles();
 
-    const rect = this.getSelectionRect(this.tilesetView.tileSelection);
-    this.drawSelectionRect(rect);
+    if (!this.toolView.tileSelection.fromMap) {
+      const rect = this.getSelectionRect(this.toolView.tileSelection);
+      this.drawSelectionRect(rect);
+    }
   }
 }
 </script>

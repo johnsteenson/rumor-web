@@ -29,7 +29,8 @@ import {
   ToolType,
   TileDrawData,
   TileDraw,
-  TileChange
+  TileChange,
+  TileSelection
 } from "../../types/map";
 
 import { namespace } from "vuex-class";
@@ -47,6 +48,8 @@ enum MapPointerMode {
   SCROLLING,
   COPYING
 }
+
+const MAX_COPY_SIZE = 6;
 
 @Component({
   components: { CanvasScrollport }
@@ -66,7 +69,7 @@ export default class MapEditor extends MapBase {
   }
 
   private applyDraw(tileDraw: TileDraw) {
-    switch (this.tilesetView.tool) {
+    switch (this.toolView.tool) {
       case ToolType.PENCIL:
         this.mapStore.mapMutator.pencil(tileDraw);
         break;
@@ -84,7 +87,7 @@ export default class MapEditor extends MapBase {
   }
 
   private releaseTool() {
-    switch (this.tilesetView.tool) {
+    switch (this.toolView.tool) {
       case ToolType.RECTANGLE:
         this.showHoverRect = true;
         break;
@@ -105,22 +108,22 @@ export default class MapEditor extends MapBase {
   ): number {
     let shiftSelX =
         (baseX + selX - this.startDrawTileCoor.x) %
-        this.tilesetView.tileSelection.w,
+        this.toolView.tileSelection.w,
       shiftSelY =
         (baseY + selY - this.startDrawTileCoor.y) %
-        this.tilesetView.tileSelection.h;
+        this.toolView.tileSelection.h;
 
     /* Loop around to end of selection rect if moving negatively along axis (left or up) */
     if (shiftSelX < 0) {
-      shiftSelX = this.tilesetView.tileSelection.w - Math.abs(shiftSelX);
+      shiftSelX = this.toolView.tileSelection.w - Math.abs(shiftSelX);
     }
 
     if (shiftSelY < 0) {
-      shiftSelY = this.tilesetView.tileSelection.h - Math.abs(shiftSelY);
+      shiftSelY = this.toolView.tileSelection.h - Math.abs(shiftSelY);
     }
 
-    return this.tilesetView.tileSelection.tileIndices[
-      shiftSelY * this.tilesetView.tileSelection.w + shiftSelX
+    return this.toolView.tileSelection.tileIndices[
+      shiftSelY * this.toolView.tileSelection.w + shiftSelX
     ];
   }
 
@@ -129,7 +132,7 @@ export default class MapEditor extends MapBase {
       map = this.map,
       tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
       section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
-      tileSelection = this.tilesetView.tileSelection;
+      tileSelection = this.toolView.tileSelection;
 
     if (this.startDrawTileCoor.x === -1) {
       this.startDrawTileCoor.x = tilePt.x;
@@ -177,20 +180,71 @@ export default class MapEditor extends MapBase {
     });
   }
 
-  public dragCopy(event: PointerEvent) {}
+  public copySelectedTiles(event: PointerEvent) {
+    const mouse = getMouseCoor(event, this.canvas),
+      map = this.map,
+      tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
+      section = this.tilesetView.tileset.sections[this.tilesetView.curSection];
+
+    let tileSelection: TileSelection;
+
+    if (this.startDrawTileCoor.x === -1) {
+      this.startDrawTileCoor.x = tilePt.x;
+      this.startDrawTileCoor.y = tilePt.y;
+    }
+
+    if (
+      this.lastDrawTileCoor.x === tilePt.x &&
+      this.lastDrawTileCoor.y === tilePt.y
+    ) {
+      return;
+    }
+
+    this.lastDrawTileCoor.x = tilePt.x;
+    this.lastDrawTileCoor.y = tilePt.y;
+
+    const copyRect = createRectFromPts(
+        this.startDrawTileCoor,
+        this.lastDrawTileCoor,
+        MAX_COPY_SIZE
+      ),
+      tileIndices = [];
+
+    for (let y = copyRect.t; y < copyRect.b; y++) {
+      for (let x = copyRect.l; x < copyRect.r; x++) {
+        const t = this.map.layer[this.tilesetView.curLayer].templateData[
+          y * this.map.w + x
+        ];
+        tileIndices.push(t);
+      }
+    }
+
+    tileSelection = {
+      w: copyRect.r - copyRect.l,
+      h: copyRect.b - copyRect.t,
+      tileIndices: tileIndices,
+      fromMap: true
+    };
+
+    this.$emit("tileSelected", tileSelection);
+  }
 
   public drawHoverRect(event: PointerEvent) {
     const mouse = getMouseCoor(event, this.canvas),
       tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
-      tileSelection = this.tilesetView.tileSelection;
+      tileSelection = this.toolView.tileSelection;
 
     let hoverRect: Rect;
 
     switch (this.pointerMode) {
       case MapPointerMode.COPYING:
-        hoverRect = createRectFromPts(tilePt, this.startDrawTileCoor);
-
+        hoverRect = createRectFromPts(
+          this.startDrawTileCoor,
+          tilePt,
+          MAX_COPY_SIZE
+        );
         break;
+
       default:
         hoverRect = {
           l: tilePt.x,
@@ -201,7 +255,8 @@ export default class MapEditor extends MapBase {
         break;
     }
 
-    if (!isRectEqual(hoverRect, this.lastHoverRect)) {
+    /* Don't redraw rect if it hasn't changed */
+    if (isRectEqual(hoverRect, this.lastHoverRect)) {
       return;
     }
 
@@ -238,6 +293,10 @@ export default class MapEditor extends MapBase {
         this.mapStore.mapMutator.newChange();
         this.drawSelectedTiles(event);
         break;
+      case 2:
+        this.pointerMode = MapPointerMode.COPYING;
+        this.copySelectedTiles(event);
+        break;
     }
 
     this.refresh();
@@ -258,6 +317,10 @@ export default class MapEditor extends MapBase {
           this.drawSelectedTiles(event);
         }
 
+        break;
+
+      case MapPointerMode.COPYING:
+        this.copySelectedTiles(event);
         break;
     }
 

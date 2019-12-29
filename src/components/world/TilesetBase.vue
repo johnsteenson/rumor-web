@@ -66,7 +66,6 @@ export default class TilesetBase extends CanvasBase {
   }
 
   public async loadTilesetView(view: TilesetView) {
-    this.tilesetView = view;
     this.section = view.tileset.sections[view.curSection];
 
     this.tileSize = view.tileSize;

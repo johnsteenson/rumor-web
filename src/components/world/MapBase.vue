@@ -22,7 +22,8 @@ import {
   Tileset,
   TilesetSection,
   Tile,
-  TilesetView
+  TilesetView,
+  ToolView
 } from "../../types/tileset";
 
 import * as resizeHandler from "@/lib/resizeHandler";
@@ -41,6 +42,7 @@ const MAX_LAYER = 2; // hardcoded for now
 @Component
 export default class MapBase extends CanvasBase {
   @Prop() protected tilesetView!: TilesetView;
+  @Prop() protected toolView!: ToolView;
   @Prop() protected useMap!: TileMap;
   @Prop() protected useMapStore!: boolean;
 
@@ -299,6 +301,10 @@ export default class MapBase extends CanvasBase {
   }
 
   protected redrawRect(rect: Rect) {
+    if (!this.map || !this.image || !this.tileSize) {
+      return;
+    }
+
     let x: number = 0,
       y: number = 0,
       l: number = 0,

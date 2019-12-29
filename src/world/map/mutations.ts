@@ -1,5 +1,5 @@
 import { TileMap, TileChange, TileDraw, TileChangeEntry } from "@/types/map";
-import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue, getSurroundingTiles } from '@/lib/world/autotile';
+import { getRectangularTileIndex, visitSurroundingTiles, getWaterTileIndex, calculateTileValue, getSurroundingTiles, getAllTiles } from '@/lib/world/autotile';
 import { Point } from '@/types/geometry';
 import { unpackMapBuf, packMapBuf } from '@/lib/world/tilemap';
 import { TemplateTileType } from '@/types/tileset';
@@ -85,7 +85,7 @@ export class MapMutator {
     }
 
     if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
-      this.correctSurroundingAutotiles(getSurroundingTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, tileDraw.l));
+      this.correctSurroundingAutotiles(getAllTiles(tileDraw.x, tileDraw.y, tileDraw.w, tileDraw.h, w, h, tileDraw.l));
     }
 
     this.mapUpdate(changeList.entries.slice(changeListStart));
@@ -190,7 +190,6 @@ export class MapMutator {
 
     for (let y = rect.t; y < rect.b; y++) {
       for (let x = rect.l; x < rect.r; x++) {
-
         const templateTileValue = packMapBuf(tileDraw.data[0].s, tileDraw.data[0].t),
           tileValue = calculateTileValue(layer, this.map.tileset, x, y, w, h, templateTileValue);
 
@@ -203,12 +202,11 @@ export class MapMutator {
           pv: 0,
           pt: 0
         }]);
-
-        if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
-          this.correctSurroundingAutotiles(getSurroundingTiles(x, y, tileDraw.w, tileDraw.h, w, h, tileDraw.l));
-        }
       }
+    }
 
+    if (tileDraw.l === 0) { // Only correct surrounding tiles for first layer.  No auto-tiles on second layer for now
+      this.correctSurroundingAutotiles(getAllTiles(rect.l, rect.t, rect.r - rect.l, rect.b - rect.t, w, h, tileDraw.l));
     }
 
     /* Push the reverted changes from the last view of rectangle to the map editor to be drawn */

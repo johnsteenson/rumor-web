@@ -1,6 +1,6 @@
-import { Point, Rect } from '@/types/geometry';
+import { Point, Rect, Dimension } from '@/types/geometry';
 
-export function createRectFromPts(p1: Point, p2: Point): Rect {
+export function createRectFromPts(p1: Point, p2: Point, maxSize?: number): Rect {
   let l, r, t, b;
 
   if (p1.x < p2.x) {
@@ -25,6 +25,16 @@ export function createRectFromPts(p1: Point, p2: Point): Rect {
   else {
     t = p1.y;
     b = t + 1;
+  }
+
+  if (maxSize) {
+    if (r - l > maxSize) {
+      r = l + maxSize;
+    }
+
+    if (b - t > maxSize) {
+      b = t + maxSize;
+    }
   }
 
   return {
