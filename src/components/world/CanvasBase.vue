@@ -166,7 +166,16 @@ export default class CanvasBase extends Vue {
   }
 
   protected scrollViewport(xVal: number, yVal: number) {
-    /* TODO xVal */
+    if (xVal !== 0) {
+      const len = this.scrollRect.innerR - this.scrollRect.innerL;
+
+      this.scrollRect.innerL = clampBetween(
+        this.scrollRect.innerL + xVal,
+        this.scrollRect.outerL,
+        this.scrollRect.outerR - len
+      );
+      this.scrollRect.innerR = this.scrollRect.innerL + this.drawArea.w;
+    }
 
     if (yVal !== 0) {
       const len = this.scrollRect.innerB - this.scrollRect.innerT;

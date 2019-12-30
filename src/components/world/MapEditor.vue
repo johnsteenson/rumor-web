@@ -39,6 +39,11 @@ import MapBase from "./MapBase.vue";
 
 import CanvasScrollport from "@/components/ui/CanvasScrollport.vue";
 import { getMouseCoor } from "../../canvas/utils";
+import { throttle } from "lodash";
+import {
+  registerWindowEvent,
+  unregisterWindowEvent
+} from "../../lib/windowEvent";
 
 const world = namespace("world");
 
@@ -49,7 +54,8 @@ enum MapPointerMode {
   COPYING
 }
 
-const MAX_COPY_SIZE = 6;
+const MAX_COPY_SIZE = 6,
+  DRAG_COEFFICIENT = 1.5;
 
 @Component({
   components: { CanvasScrollport }
@@ -59,10 +65,15 @@ export default class MapEditor extends MapBase {
 
   private lastDrawTileCoor: Point = { x: -1, y: -1 };
   private startDrawTileCoor: Point = { x: -1, y: -1 };
+  private startDrawCanvasCoor: Point = { x: -1, y: -1 };
   private lastHoverRect: Rect = { l: -1, r: -1, t: -1, b: -1 };
 
   private pointerMode: MapPointerMode = MapPointerMode.OFF;
   private showHoverRect: boolean = true;
+
+  private clickTimestamp?: number;
+
+  @world.Action("setLayer") setLayer!: Function;
 
   private created() {
     this.baseCoor = {} as Rect;
@@ -98,6 +109,8 @@ export default class MapEditor extends MapBase {
     this.lastDrawTileCoor.y = -1;
     this.startDrawTileCoor.x = -1;
     this.startDrawTileCoor.y = -1;
+    this.startDrawCanvasCoor.x = -1;
+    this.startDrawCanvasCoor.y = -1;
   }
 
   private getSelectionCoorForMapCoor(
@@ -125,6 +138,23 @@ export default class MapEditor extends MapBase {
     return this.toolView.tileSelection.tileIndices[
       shiftSelY * this.toolView.tileSelection.w + shiftSelX
     ];
+  }
+
+  private isDoubleClick() {
+    if (!this.clickTimestamp) {
+      this.clickTimestamp = performance.now();
+      return false;
+    }
+
+    const curTime = performance.now();
+
+    if (curTime - this.clickTimestamp < 300) {
+      this.clickTimestamp = curTime;
+      return true;
+    }
+
+    this.clickTimestamp = curTime;
+    return false;
   }
 
   public drawSelectedTiles(event: PointerEvent) {
@@ -229,6 +259,29 @@ export default class MapEditor extends MapBase {
     this.$emit("tileSelected", tileSelection);
   }
 
+  public dragScrolling(event: PointerEvent) {
+    const mouse = getMouseCoor(event, this.canvas);
+
+    if (this.startDrawCanvasCoor.x === -1) {
+      this.startDrawCanvasCoor.x = mouse.x;
+      this.startDrawCanvasCoor.y = mouse.y;
+    }
+
+    const ptDiff = {
+      x: Math.floor((mouse.x - this.startDrawCanvasCoor.x) * DRAG_COEFFICIENT),
+      y: Math.floor((mouse.y - this.startDrawCanvasCoor.y) * DRAG_COEFFICIENT)
+    };
+
+    if (ptDiff.x !== 0) {
+      this.startDrawCanvasCoor.x = mouse.x;
+    }
+    if (ptDiff.y !== 0) {
+      this.startDrawCanvasCoor.y = mouse.y;
+    }
+
+    this.scrollViewport(-ptDiff.x, -ptDiff.y);
+  }
+
   public drawHoverRect(event: PointerEvent) {
     const mouse = getMouseCoor(event, this.canvas),
       tilePt = this.canvasToTileCoor(mouse.x, mouse.y),
@@ -293,9 +346,32 @@ export default class MapEditor extends MapBase {
         this.mapStore.mapMutator.newChange();
         this.drawSelectedTiles(event);
         break;
+      case 1:
+        this.pointerMode = MapPointerMode.SCROLLING;
+        this.dragScrolling(event);
+        const throttledDragScrolling = throttle(
+          this.dragScrolling.bind(this),
+          100
+        );
+
+        registerWindowEvent("pointermove", (pEvent: PointerEvent) => {
+          throttledDragScrolling(pEvent);
+        });
+
+        registerWindowEvent("pointerup", () => {
+          this.releaseTool();
+          unregisterWindowEvent("pointermove");
+          unregisterWindowEvent("pointerup");
+        });
+
+        break;
       case 2:
-        this.pointerMode = MapPointerMode.COPYING;
-        this.copySelectedTiles(event);
+        if (this.isDoubleClick()) {
+          this.swapLayers();
+        } else {
+          this.pointerMode = MapPointerMode.COPYING;
+          this.copySelectedTiles(event);
+        }
         break;
     }
 
@@ -331,6 +407,10 @@ export default class MapEditor extends MapBase {
 
   public contextMenu(event: MouseEvent) {
     event.preventDefault();
+  }
+
+  public swapLayers() {
+    this.setLayer(this.tilesetView.curLayer === 0 ? 1 : 0);
   }
 }
 </script>
