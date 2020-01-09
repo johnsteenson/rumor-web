@@ -1,5 +1,5 @@
 <template>
-  <div class="world">
+  <div class="world" v-if="mapLoaded">
     <div class="container">
       <div class="world-tile-toolbar">
         <TileToolbar />
@@ -42,9 +42,14 @@ import TilePalette from "@/components/world/TilePalette.vue";
 import TileDebug from "@/components/world/TileDebug.vue";
 import TileToolbar from "@/components/world/TileToolbar.vue";
 import { Tileset, TilesetView, ToolView } from "@/types/tileset";
-import { MapView, TileSelection } from "../types/map";
+import { MapView, TileMap, TileSelection } from "../types/map";
 
 import { mapStore } from "@/world";
+
+import socketClient from "@/service/socket";
+import { createLayers } from "../lib/world/tilemap";
+
+import tileset from "@/data/tileset-world.json";
 
 const world = namespace("world");
 
@@ -57,6 +62,8 @@ const world = namespace("world");
   }
 })
 export default class World extends Vue {
+  private mapLoaded: boolean = false;
+
   @world.Getter("getTilesetView") tilesetView!: TilesetView;
 
   @world.Getter("getToolView") toolView!: ToolView;
@@ -64,6 +71,19 @@ export default class World extends Vue {
   @world.Mutation("selectTileIndices") selectTileIndices: any;
 
   @Provide("mapStore") store = mapStore;
+
+  private mounted() {
+    socketClient.on("getMap", (mapData: any) => {
+      console.log("Received map", mapData);
+
+      const map: TileMap = mapData as TileMap;
+      map.layer = createLayers(map.w, map.h, 2, map.buffer);
+      map.tileset = tileset;
+      mapStore.map = map;
+
+      this.mapLoaded = true;
+    });
+  }
 
   tileSelected(selectedTileIndices: TileSelection) {
     this.selectTileIndices(selectedTileIndices);

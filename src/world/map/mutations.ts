@@ -8,6 +8,9 @@ import { ChangeRegistry } from './changeRegistry';
 
 const MAX_ITERATIONS = 25000;
 
+import socketClient from "@/service/socket";
+import { serializeChanges } from './serialize';
+
 export class MapMutator {
   private map!: TileMap;
 
@@ -217,6 +220,16 @@ export class MapMutator {
     this.mapUpdate(this.changeRegistry.getActiveChangeList()!.entries);
   }
 
+  public flushChanges(changes?: TileChange) {
+    if (changes) {
+      console.log('Pushed changes', changes);
+      socketClient.emit('updateMap', serializeChanges(changes.entries));
+    } else {
+      console.log('List changes', this.changeRegistry.filterActiveChangeList()!.entries);
+      socketClient.emit('updateMap', serializeChanges(this.changeRegistry.filterActiveChangeList()!.entries));
+    }
+  }
+
   public undo() {
     const lastChanges = this.changeRegistry.revertLastChangeList();
 
@@ -224,6 +237,7 @@ export class MapMutator {
       return;
     }
 
+    this.flushChanges(lastChanges);
     this.mapUpdate(lastChanges.entries);
   }
 

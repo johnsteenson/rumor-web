@@ -86,8 +86,8 @@ export default class MapEditor extends MapBase {
         break;
 
       case ToolType.FILL:
-        this.pointerMode = MapPointerMode.OFF;
         this.mapStore.mapMutator.fill(tileDraw);
+        this.releaseTool();
         break;
 
       case ToolType.RECTANGLE:
@@ -97,7 +97,7 @@ export default class MapEditor extends MapBase {
     }
   }
 
-  private releaseTool() {
+  private releaseTool(flushChanges: boolean = true) {
     switch (this.toolView.tool) {
       case ToolType.RECTANGLE:
         this.showHoverRect = true;
@@ -111,6 +111,10 @@ export default class MapEditor extends MapBase {
     this.startDrawTileCoor.y = -1;
     this.startDrawCanvasCoor.x = -1;
     this.startDrawCanvasCoor.y = -1;
+
+    if (flushChanges) {
+      this.mapStore.mapMutator.flushChanges();
+    }
   }
 
   private getSelectionCoorForMapCoor(
@@ -359,7 +363,7 @@ export default class MapEditor extends MapBase {
         });
 
         registerWindowEvent("pointerup", () => {
-          this.releaseTool();
+          this.releaseTool(false);
           unregisterWindowEvent("pointermove");
           unregisterWindowEvent("pointerup");
         });
@@ -379,7 +383,7 @@ export default class MapEditor extends MapBase {
   }
 
   public pointerUp(event: PointerEvent) {
-    this.releaseTool();
+    this.releaseTool(this.pointerMode === MapPointerMode.DRAWING);
   }
 
   public pointerMove(event: PointerEvent) {
@@ -387,7 +391,7 @@ export default class MapEditor extends MapBase {
       case MapPointerMode.DRAWING:
         // Check for right-click undo
         if (event.buttons & 2) {
-          this.releaseTool();
+          this.releaseTool(false);
           this.mapStore.mapMutator.undo();
         } else {
           this.drawSelectedTiles(event);
