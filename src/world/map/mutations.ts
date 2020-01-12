@@ -6,10 +6,11 @@ import { TemplateTileType } from '@/types/tileset';
 import { createRectFromPts } from '@/lib/geometry';
 import { ChangeRegistry } from './changeRegistry';
 
+import { getServiceInterface } from '@/service/rumor';
+
 const MAX_ITERATIONS = 25000;
 
-import socketClient from "@/service/socket";
-import { serializeChanges } from './serialize';
+import { serializeChanges } from '../../service/rumor/io/serialize';
 
 export class MapMutator {
   private map!: TileMap;
@@ -220,13 +221,16 @@ export class MapMutator {
     this.mapUpdate(this.changeRegistry.getActiveChangeList()!.entries);
   }
 
-  public flushChanges(changes?: TileChange) {
+  public async flushChanges(changes?: TileChange) {
+    const serviceInterface = await getServiceInterface();
     if (changes) {
       console.log('Pushed changes', changes);
-      socketClient.emit('updateMap', serializeChanges(changes.entries));
+      serviceInterface.updateMap(changes);
+      //socketClient.emit('updateMap', serializeChanges(changes.entries));
     } else {
       console.log('List changes', this.changeRegistry.filterActiveChangeList()!.entries);
-      socketClient.emit('updateMap', serializeChanges(this.changeRegistry.filterActiveChangeList()!.entries));
+      serviceInterface.updateMap(this.changeRegistry.filterActiveChangeList()!);
+      // socketClient.emit('updateMap', serializeChanges(this.changeRegistry.filterActiveChangeList()!.entries));
     }
   }
 

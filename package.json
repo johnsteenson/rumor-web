@@ -9,6 +9,7 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "axios": "^0.19.1",
     "braces": "^3.0.2",
     "lodash": "^4.17.15",
     "mem": "^6.0.1",

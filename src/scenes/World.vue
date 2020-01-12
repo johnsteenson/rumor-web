@@ -46,12 +46,14 @@ import { MapView, TileMap, TileSelection } from "../types/map";
 
 import { mapStore } from "@/world";
 
-import socketClient from "@/service/socket";
-import { createLayers } from "../lib/world/tilemap";
+import { getServiceInterface } from "@/service/rumor";
 
 import tileset from "@/data/tileset-world.json";
+import { RumorService } from "@/service/rumor/interface";
+import { RumorServiceLocal } from "@/service/rumor/local";
 
-const world = namespace("world");
+const world = namespace("world"),
+  project = namespace("project");
 
 @Component({
   components: {
@@ -73,16 +75,17 @@ export default class World extends Vue {
   @Provide("mapStore") store = mapStore;
 
   private mounted() {
-    socketClient.on("getMap", (mapData: any) => {
+    const service = getServiceInterface();
+
+    service.onGetMap((mapData: any) => {
       console.log("Received map", mapData);
 
-      const map: TileMap = mapData as TileMap;
-      map.layer = createLayers(map.w, map.h, 2, map.buffer);
-      map.tileset = tileset;
-      mapStore.map = map;
+      mapStore.map = mapData;
 
       this.mapLoaded = true;
     });
+
+    service.getMap("1");
   }
 
   tileSelected(selectedTileIndices: TileSelection) {
