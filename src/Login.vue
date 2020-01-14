@@ -21,7 +21,7 @@ import { Getter, namespace } from "vuex-class";
 import Card from "@/components/ui/Card.vue";
 
 import { createLocalInterface, createServiceInterface } from "@/service/rumor";
-import { signIn } from "@/service/signIn";
+import { signIn, signInWithToken } from "@/service/signIn";
 
 const project = namespace("project");
 
@@ -38,18 +38,23 @@ export default class App extends Vue {
   private password: string = "";
   private errorMsg: string = "";
 
-  public async login() {
-    console.log(`Logging in as ${this.username} ${this.password}`);
+  public mounted() {}
 
+  public async login() {
+    if (!this.username || !this.password) {
+      this.errorMsg = "Must specify a username and password.";
+      return;
+    }
     signIn(this.username, this.password)
       .then((token: string) => {
         createServiceInterface(token).then(() => {
+          window.localStorage.setItem("token", token);
           this.setOffline(false);
           this.setLoggedIn(true);
         });
       })
       .catch(err => {
-        this.errorMsg = "Invalid user/pass";
+        this.errorMsg = "Invalid username or password";
       });
 
     try {

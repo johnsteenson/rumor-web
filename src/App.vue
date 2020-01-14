@@ -5,7 +5,7 @@
       <Header />
       <router-view />
     </div>
-    <Login v-else />
+    <Login v-if="redirectToLogin && !loggedIn" />
   </div>
 </template>
 
@@ -17,6 +17,7 @@ import Header from "@/components/Header.vue";
 import Login from "@/Login.vue";
 import BrowserCheck from "@/components/BrowserCheck.vue";
 
+import { signIn, signInWithToken } from "@/service/signIn";
 import { createServiceInterface } from "@/service/rumor";
 
 const project = namespace("project");
@@ -32,9 +33,27 @@ export default class App extends Vue {
   @project.State("loggedIn") loggedIn!: boolean;
 
   @project.Mutation("setLoggedIn") setLoggedIn!: Function;
+  @project.Mutation("setOffline") setOffline!: Function;
+
+  private redirectToLogin: boolean = false;
 
   public mounted() {
-    // TODO Store JWT in local storage, and automatically sign in if present.
+    const token = window.localStorage.getItem("token");
+    if (token) {
+      signInWithToken(token)
+        .then(() => {
+          createServiceInterface(token).then(() => {
+            this.setOffline(false);
+            this.setLoggedIn(true);
+          });
+        })
+        .catch(err => {
+          window.localStorage.removeItem("token");
+          this.redirectToLogin = true;
+        });
+    } else {
+      this.redirectToLogin = true;
+    }
   }
 }
 </script>

@@ -14,7 +14,7 @@ export async function createLocalInterface(): Promise<RumorService> {
 
 export function createServiceInterface(token: string): Promise<RumorService> {
   return new Promise<RumorService>((resolve, reject) => {
-    const socket = SocketIo("http://localhost:3000");
+    const socket = SocketIo(process.env.VUE_APP_SERVICE_ENDPOINT);
 
     socket.on('connect', () => {
       console.log('CONNECTED');

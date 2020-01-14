@@ -1,12 +1,9 @@
 
 import axios from 'axios';
 
-export async function signIn(user: string, pass: string): Promise<string> {
+function callSignInApi(body: { user?: string, pass?: string, token?: string }): Promise<string> {
   return new Promise<string>((resolve, reject) => {
-    axios.post('http://localhost:3000/auth', {
-      user: 'user',
-      pass: 'pass'
-    }).then((res) => {
+    axios.post(`${process.env.VUE_APP_SERVICE_ENDPOINT}/auth`, body).then((res) => {
       if (!res.data.token) {
         console.error('No token present on payload', res.data);
         reject();
@@ -19,5 +16,19 @@ export async function signIn(user: string, pass: string): Promise<string> {
         reject();
       });
 
+  });
+}
+
+
+export async function signIn(user: string, pass: string): Promise<string> {
+  return callSignInApi({
+    user,
+    pass
+  });
+}
+
+export async function signInWithToken(token: string): Promise<string> {
+  return callSignInApi({
+    token
   });
 }
