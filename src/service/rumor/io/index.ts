@@ -17,7 +17,6 @@ export class RumorServiceIo extends RumorService {
 
     this.socketClient = socketClient;
     this.registerEvents();
-    this.getMap("1")
   }
 
   private registerEvents() {

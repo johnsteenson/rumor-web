@@ -13,7 +13,6 @@ export class RumorServiceLocal extends RumorService {
     super();
 
     this.map = createMap("Local Map", 200, 200, tileset as any);
-    this.getMap("1");
   }
 
   public getMap(mapId: string) {
