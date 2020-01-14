@@ -13,12 +13,14 @@ const state: ProjectState = {
     w: 16,
     h: 16,
   },
+  loggedIn: false,
+  offline: false
 };
 
 export const projectModule: Module<ProjectState, RootState> = {
-    namespaced,
-    state,
-    getters,
-    actions,
-    mutations,
+  namespaced,
+  state,
+  getters,
+  actions,
+  mutations,
 };

@@ -1,5 +1,5 @@
 <template>
-  <div class="world">
+  <div class="world" v-if="mapLoaded">
     <div class="container">
       <div class="world-tile-toolbar">
         <TileToolbar />
@@ -42,11 +42,18 @@ import TilePalette from "@/components/world/TilePalette.vue";
 import TileDebug from "@/components/world/TileDebug.vue";
 import TileToolbar from "@/components/world/TileToolbar.vue";
 import { Tileset, TilesetView, ToolView } from "@/types/tileset";
-import { MapView, TileSelection } from "../types/map";
+import { MapView, TileMap, TileSelection } from "../types/map";
 
 import { mapStore } from "@/world";
 
-const world = namespace("world");
+import { getServiceInterface } from "@/service/rumor";
+
+import tileset from "@/data/tileset-world.json";
+import { RumorService } from "@/service/rumor/interface";
+import { RumorServiceLocal } from "@/service/rumor/local";
+
+const world = namespace("world"),
+  project = namespace("project");
 
 @Component({
   components: {
@@ -57,6 +64,8 @@ const world = namespace("world");
   }
 })
 export default class World extends Vue {
+  private mapLoaded: boolean = false;
+
   @world.Getter("getTilesetView") tilesetView!: TilesetView;
 
   @world.Getter("getToolView") toolView!: ToolView;
@@ -64,6 +73,20 @@ export default class World extends Vue {
   @world.Mutation("selectTileIndices") selectTileIndices: any;
 
   @Provide("mapStore") store = mapStore;
+
+  private mounted() {
+    const service = getServiceInterface();
+
+    service.onGetMap((mapData: any) => {
+      console.log("Received map", mapData);
+
+      mapStore.map = mapData;
+
+      this.mapLoaded = true;
+    });
+
+    service.getMap("1");
+  }
 
   tileSelected(selectedTileIndices: TileSelection) {
     this.selectTileIndices(selectedTileIndices);

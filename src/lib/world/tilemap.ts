@@ -5,7 +5,7 @@ const MAP_BYTE_SIZE = 2,
   LAYERS = 2,
   BASE_WATER_TILE = 4;
 
-function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBuffer) {
+export function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBuffer, fillBlank: boolean = false): MapLayer[] {
   const layers: MapLayer[] = new Array(totalLayers),
     totalTiles = w * h,
     halfPoint = buffer.byteLength / 2;
@@ -17,10 +17,12 @@ function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBu
       visibleData: new Uint16Array(buffer, halfPoint + (l * MAP_BYTE_SIZE * totalTiles), totalTiles)
     };
 
-    for (let j = 0; j < h; j++) {
-      for (let k = 0; k < w; k++) {
-        layers[l].templateData[j * w + k] = 0;
-        layers[l].visibleData[j * w + k] = l === 0 ? BASE_WATER_TILE : 0;
+    if (fillBlank) {
+      for (let j = 0; j < h; j++) {
+        for (let k = 0; k < w; k++) {
+          layers[l].templateData[j * w + k] = 0;
+          layers[l].visibleData[j * w + k] = l === 0 ? BASE_WATER_TILE : 0;
+        }
       }
     }
   }
@@ -30,7 +32,7 @@ function createLayers(w: number, h: number, totalLayers: number, buffer: ArrayBu
 
 export function createMap(title: string, w: number, h: number, tileset: Tileset) {
   const buffer = new ArrayBuffer(w * h * LAYERS * MAP_BYTE_SIZE * 2),
-    layer = createLayers(w, h, LAYERS, buffer);
+    layer = createLayers(w, h, LAYERS, buffer, true);
 
   const map: TileMap = {
     title,
