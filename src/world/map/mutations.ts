@@ -10,22 +10,41 @@ import { getServiceInterface } from '@/service/rumor';
 
 const MAX_ITERATIONS = 25000;
 
-import { serializeChanges } from '../../service/rumor/io/serialize';
-
 export class MapMutator {
   private map!: TileMap;
 
   private mapUpdate: Function;
 
+  private initialized: boolean = false;
+
   private changeRegistry: ChangeRegistry = new ChangeRegistry();
 
   constructor(mapUpdate: Function) {
     this.mapUpdate = mapUpdate;
+
+
   }
 
   set tileMap(map: TileMap) {
     this.map = map;
     this.changeRegistry.tileMap = map;
+
+    if (!this.initialized) {
+      this.attachServiceListener();
+    }
+  }
+
+  private attachServiceListener() {
+    this.initialized = true;
+
+    const serviceInterface = getServiceInterface();
+
+    serviceInterface.onMapUpdate((tileChanges: TileChangeEntry[]) => {
+      this.changeRegistry.newChangeList();
+      this.changeRegistry.addChanges(tileChanges);
+
+      this.mapUpdate(tileChanges);
+    });
   }
 
   private correctSurroundingAutotiles(points: Point[], preview: boolean = false) {
@@ -224,13 +243,11 @@ export class MapMutator {
   public async flushChanges(changes?: TileChange) {
     const serviceInterface = await getServiceInterface();
     if (changes) {
-      console.log('Pushed changes', changes);
+      /* console.log('Pushed changes', changes); */
       serviceInterface.updateMap(changes);
-      //socketClient.emit('updateMap', serializeChanges(changes.entries));
     } else {
-      console.log('List changes', this.changeRegistry.filterActiveChangeList()!.entries);
+      /* console.log('List changes', this.changeRegistry.filterActiveChangeList()!.entries); */
       serviceInterface.updateMap(this.changeRegistry.filterActiveChangeList()!);
-      // socketClient.emit('updateMap', serializeChanges(this.changeRegistry.filterActiveChangeList()!.entries));
     }
   }
 

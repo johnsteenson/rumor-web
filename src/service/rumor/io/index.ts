@@ -1,10 +1,10 @@
 import { RumorService } from "@/service/rumor/interface";
 
 import { createLayers } from "@/lib/world/tilemap";
-import { TileMap, TileChange } from '@/types/map';
+import { TileMap, TileChange, TileChangeEntry } from '@/types/map';
 import { Tileset } from '@/types/tileset';
 
-import { serializeChanges } from './serialize';
+import { serializeChanges, deserializeChanges } from './serialize';
 
 import tileset from "@/data/tileset-world.json";
 
@@ -26,6 +26,12 @@ export class RumorServiceIo extends RumorService {
       map.tileset = tileset as Tileset; // mapData.tileset as Tileset;
 
       this.onGetMapCallback(map);
+    });
+
+    this.socketClient.on("updateMap", (changes: ArrayBuffer) => {
+      const tileChanges: TileChangeEntry[] = deserializeChanges(changes);
+
+      this.onMapUpdateCallback(tileChanges);
     });
   }
 

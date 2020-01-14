@@ -17,7 +17,6 @@ export function createServiceInterface(token: string): Promise<RumorService> {
     const socket = SocketIo(process.env.VUE_APP_SERVICE_ENDPOINT);
 
     socket.on('connect', () => {
-      console.log('CONNECTED');
       socket.emit('authenticate', token, () => {
         serviceInterface = new RumorServiceIo(socket);
         resolve(serviceInterface);

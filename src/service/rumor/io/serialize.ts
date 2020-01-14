@@ -20,3 +20,24 @@ export function serializeChanges(changes: TileChangeEntry[]) {
 
   return buffer;
 }
+
+export function deserializeChanges(buffer: ArrayBuffer): TileChangeEntry[] {
+  const arr = new Uint16Array(buffer, 0, buffer.byteLength / 2),
+    changes: TileChangeEntry[] = [];
+
+  let pos = 0, i = 0;
+
+  while (pos < arr.length) {
+    const change: any = {}
+
+    change.l = arr[pos++];
+    change.x = arr[pos++];
+    change.y = arr[pos++];
+    change.t = arr[pos++];
+    change.v = arr[pos++];
+
+    changes.push(change);
+  }
+
+  return changes;
+}

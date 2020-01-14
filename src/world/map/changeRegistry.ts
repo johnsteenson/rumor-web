@@ -16,12 +16,14 @@ export class ChangeRegistry {
     this.map = map;
   }
 
-  public newChangeList() {
+  public newChangeList(): TileChange {
     this.changes.push({
       entries: [],
     });
 
     this.pointsVisited.clear();
+
+    return this.changes.top() as TileChange;
   }
 
   public getActiveChangeList(): Nullable<TileChange> {

@@ -78,7 +78,7 @@ export default class World extends Vue {
     const service = getServiceInterface();
 
     service.onGetMap((mapData: any) => {
-      console.log("Received map", mapData);
+      /* console.log("Received map", mapData); */
 
       mapStore.map = mapData;
 
