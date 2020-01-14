@@ -69,6 +69,7 @@ export default class ToolbarButton extends Vue {
   font-size: 1.4em;
   padding: 1px;
   margin: 0 2px;
+  color: initial;
 }
 
 .toolbar-button-pressed {

@@ -102,7 +102,7 @@ button {
 .login-box {
   margin-left: 40%;
   margin-top: 15%;
-  width: min(20%, 210px);
+  width: 210px;
 }
 
 .login-error {
