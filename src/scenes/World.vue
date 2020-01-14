@@ -84,8 +84,6 @@ export default class World extends Vue {
 
       this.mapLoaded = true;
     });
-
-    service.getMap("1");
   }
 
   tileSelected(selectedTileIndices: TileSelection) {
