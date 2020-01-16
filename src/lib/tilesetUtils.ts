@@ -1,6 +1,9 @@
 import { Tileset, TilesetSection, TileType, TileAnim } from '@/types/tileset';
 
 /*
+
+TODO - This can potentially be deleted
+
 export function mapSection(inSection: TilesetSection) {
   const tileSection: TilesetSection = {
     imageFile: inSection.imageFile,

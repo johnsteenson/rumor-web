@@ -62,7 +62,7 @@ export default class App extends Vue {
 .app-contents {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
 }
 
 #app {
@@ -70,6 +70,6 @@ export default class App extends Vue {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
-  height: 100%;
+  height: 100vh;
 }
 </style>

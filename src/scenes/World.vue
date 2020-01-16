@@ -13,7 +13,9 @@
         ></TilePalette>
       </div>
 
-      <div class="world-map-selector">Map Selector goes here</div>
+      <div class="world-map-selector">
+        <MapTree />
+      </div>
 
       <div class="world-map-editor">
         <MapEditor
@@ -41,6 +43,7 @@ import MapEditor from "@/components/world/MapEditor.vue";
 import TilePalette from "@/components/world/TilePalette.vue";
 import TileDebug from "@/components/world/TileDebug.vue";
 import TileToolbar from "@/components/world/TileToolbar.vue";
+import MapTree from "@/components/world/MapTree.vue";
 import { Tileset, TilesetView, ToolView } from "@/types/tileset";
 import { MapView, TileMap, TileSelection } from "../types/map";
 
@@ -58,6 +61,7 @@ const world = namespace("world"),
 @Component({
   components: {
     MapEditor,
+    MapTree,
     TilePalette,
     TileDebug,
     TileToolbar
@@ -103,9 +107,10 @@ div.world {
 div.container {
   display: grid;
   grid-template-columns: 2fr minmax(0, 10fr);
-  grid-template-rows: min-content 8fr 2fr;
+  grid-template-rows: minmax(0, min-content) minmax(0, 8fr) minmax(0, 2.5fr);
   min-width: 0;
   height: 100%;
+  max-height: calc(100vh - 1.2rem - 2px);
   margin: 0 4px 0 2px;
   grid-template-areas:
     "tiletoolbar mapeditor"
@@ -127,5 +132,6 @@ div.container {
 
 .world-map-selector {
   grid-area: mapselector;
+  overflow: scroll;
 }
 </style>
