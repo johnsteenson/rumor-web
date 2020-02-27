@@ -1,6 +1,11 @@
 <template>
   <div class="treeView">
-    <TreeNode :items="treeRoot" :treeState="treeState"></TreeNode>
+    <TreeNode
+      :items="treeRoot"
+      :treeState="treeState"
+      :selectedId="selectedId"
+      @treeItemSelected="treeItemSelected"
+    ></TreeNode>
   </div>
 </template>
 
@@ -50,6 +55,8 @@ function searchTree(nodes, results, term) {
 export default class TreeView extends Vue {
   @Prop() private treeRoot!: TreeItem;
 
+  @Prop() private selectedId!: string;
+
   private searchResults: string[] = [];
 
   private treeState: TreeState = {
@@ -64,7 +71,9 @@ export default class TreeView extends Vue {
     /* searchTree(this.tree, this.searchResults, regex); */
   }
 
-  public handleSelect(item: TreeItem) {}
+  public treeItemSelected(item: TreeItem) {
+    this.$emit("treeItemSelected", item);
+  }
 }
 </script>
 

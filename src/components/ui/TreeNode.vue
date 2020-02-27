@@ -14,7 +14,7 @@
         @click="select(item, $event)"
         @dblclick="expand(item, $event)"
         @contextmenu="contextMenu(item, $event)"
-        :class="{'tree-selected': (treeState.selected == item.id)}"
+        :class="{'tree-selected': (selectedId === item.id)}"
       >
         <component :is="item.icon" v-if="item.icon" />
         {{item.label}}
@@ -23,6 +23,8 @@
         v-show="!treeState.collapsed[item.id]"
         :items="item.children"
         :treeState="treeState"
+        :selectedId="selectedId"
+        @treeItemSelected="treeItemSelected"
       ></TreeNode>
     </li>
   </ul>
@@ -53,6 +55,8 @@ export default class TreeNode extends Vue {
 
   @Prop() private treeState!: TreeState;
 
+  @Prop() private selectedId!: string;
+
   public select(item: TreeItem, $event: MouseEvent) {
     $event.preventDefault();
     $event.stopImmediatePropagation();
@@ -61,7 +65,11 @@ export default class TreeNode extends Vue {
       return;
     }
 
-    this.treeState.selected = item.id;
+    this.$emit("treeItemSelected", item);
+  }
+
+  public treeItemSelected(item: TreeItem) {
+    this.$emit("treeItemSelected", item);
   }
 
   public expand(item: TreeItem, $event: MouseEvent) {

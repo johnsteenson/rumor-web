@@ -68,6 +68,9 @@ export default class CanvasBase extends Vue {
     const el = this.$el,
       compStyles = window.getComputedStyle(el),
       boundingRect = el.getBoundingClientRect(),
+      borderXOffset =
+        parseFloat(compStyles.getPropertyValue("border-left-width")) +
+        parseFloat(compStyles.getPropertyValue("border-right-width")),
       borderYOffset =
         parseFloat(compStyles.getPropertyValue("border-top-width")) +
         parseFloat(compStyles.getPropertyValue("border-bottom-width"));
@@ -75,7 +78,7 @@ export default class CanvasBase extends Vue {
     this.doResize(this.$el, {
       x: boundingRect.left,
       y: boundingRect.top,
-      width: boundingRect.width,
+      width: boundingRect.width - borderXOffset,
       height: boundingRect.height - borderYOffset
     } as DOMRect);
   }
@@ -162,7 +165,7 @@ export default class CanvasBase extends Vue {
     this.scrollRect.outerB = viewport.b;
 
     this.clipViewport();
-    this.onResize();
+    this.forceResizeEvent();
   }
 
   protected scrollViewport(xVal: number, yVal: number) {

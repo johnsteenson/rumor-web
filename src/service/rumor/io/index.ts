@@ -1,7 +1,7 @@
 import { RumorService } from "@/service/rumor/interface";
 
 import { createLayers } from "@/lib/world/tilemap";
-import { TileMap, TileChange, TileChangeEntry } from '@/types/map';
+import { TileMap, TileChange, TileChangeEntry, TileMapTree } from '@/types/map';
 import { Tileset } from '@/types/tileset';
 
 import { serializeChanges, deserializeChanges } from './serialize';
@@ -33,10 +33,19 @@ export class RumorServiceIo extends RumorService {
 
       this.onMapUpdateCallback(tileChanges);
     });
+
+    this.socketClient.on("getMapTree", (tree: TileMapTree) => {
+
+      this.onMapTreeUpdateCallback(tree);
+    });
   }
 
   public getMap(mapId: string) {
     this.socketClient.emit('getMap', mapId);
+  }
+
+  public getMapTree() {
+    this.socketClient.emit('getMapTree');
   }
 
   public updateMap(changes: TileChange) {

@@ -1,6 +1,6 @@
 <template>
   <div class="map-tree-container">
-    <TreeView :treeRoot="treeRoot" />
+    <TreeView :selectedId="selectedId" :treeRoot="treeRoot" @treeItemSelected="treeItemSelected" />
   </div>
 </template>
 
@@ -8,10 +8,32 @@
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { namespace } from "vuex-class";
 
+import { getServiceInterface } from "@/service/rumor";
+
 import TreeView from "@/components/ui/TreeView.vue";
 import { TreeItem } from "../../lib/ui/tree";
+import { TileMapTree } from "../../types/map";
 
 const world = namespace("world");
+
+function mapToTreeItem(treeItems: TileMapTree[]): TreeItem[] {
+  const items: TreeItem[] = [];
+
+  for (const tree of treeItems) {
+    const item: TreeItem = {
+      id: tree.id,
+      label: tree.title
+    };
+
+    if (tree.children) {
+      item.children = mapToTreeItem(tree.children);
+    }
+
+    items.push(item);
+  }
+
+  return items;
+}
 
 @Component({
   components: {
@@ -21,68 +43,20 @@ const world = namespace("world");
 export default class MapTree extends Vue {
   private treeRoot: TreeItem[] = [];
 
-  public mounted() {
-    const tree = [
-      {
-        id: "-1",
-        label: "Sucmo Super RPG",
-        disableSelect: true,
-        icon: "folder",
-        children: [
-          {
-            id: "1",
-            label: "Lameia",
-            icon: "file",
-            children: [
-              {
-                id: "3",
-                label: "AOL Capitol"
-              },
-              {
-                id: "231",
-                label: "Omegaria"
-              },
-              {
-                id: "642",
-                label: "Luluxia"
-              }
-            ]
-          },
-          {
-            id: "2",
-            label: "SaGa Frontier World",
-            children: [
-              {
-                id: "4",
-                label: "Koorong",
-                children: [
-                  {
-                    id: "5",
-                    label: "Port"
-                  }
-                ]
-              },
-              {
-                id: "6",
-                label: "Mosperiburg"
-              },
-              {
-                id: "7",
-                label: "Magic Kingdom",
-                children: [
-                  {
-                    id: "666",
-                    label: "Hell"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ];
+  private selectedId: string = "1";
 
-    this.$set(this, "treeRoot", tree);
+  public mounted() {
+    getServiceInterface().onMapTreeUpdate((tileMapTree: TileMapTree) => {
+      const tree = mapToTreeItem([tileMapTree]);
+
+      this.$set(this, "treeRoot", tree);
+    });
+  }
+
+  public treeItemSelected(treeItem: TreeItem) {
+    this.selectedId = treeItem.id;
+
+    getServiceInterface().getMap(this.selectedId);
   }
 }
 </script>

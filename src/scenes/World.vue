@@ -82,14 +82,13 @@ export default class World extends Vue {
     const service = getServiceInterface();
 
     service.onGetMap((mapData: any) => {
-      /* console.log("Received map", mapData); */
-
       mapStore.map = mapData;
 
       this.mapLoaded = true;
     });
 
     service.getMap("1");
+    service.getMapTree();
   }
 
   tileSelected(selectedTileIndices: TileSelection) {

@@ -6,6 +6,8 @@ export abstract class RumorService {
 
   protected onMapUpdateCallback!: Function;
 
+  protected onMapTreeUpdateCallback!: Function;
+
   public onGetMap(callback: Function) {
     this.onGetMapCallback = callback;
   }
@@ -13,7 +15,13 @@ export abstract class RumorService {
   public onMapUpdate(callback: Function) {
     this.onMapUpdateCallback = callback;
   }
+
+  public onMapTreeUpdate(callback: Function) {
+    this.onMapTreeUpdateCallback = callback;
+  }
   abstract getMap(mapId: string): void;
+
+  abstract getMapTree(): void;
 
 
   abstract updateMap(changes: TileChange): void;

@@ -21,6 +21,11 @@ export class RumorServiceLocal extends RumorService {
     }
   }
 
+  public getMapTree() {
+    console.log('Get map tree not currently implemented for offline mode');
+
+  }
+
   public updateMap() {
 
   }
