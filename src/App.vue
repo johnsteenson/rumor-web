@@ -18,7 +18,7 @@ import Login from "@/Login.vue";
 import BrowserCheck from "@/components/BrowserCheck.vue";
 
 import { signIn, signInWithToken } from "@/service/signIn";
-import { createServiceInterface } from "@/service/rumor";
+import { getServiceInterface } from "@/service/rumor";
 
 const project = namespace("project");
 
@@ -42,10 +42,15 @@ export default class App extends Vue {
     if (token) {
       signInWithToken(token)
         .then(() => {
-          createServiceInterface(token).then(() => {
-            this.setOffline(false);
-            this.setLoggedIn(true);
-          });
+          getServiceInterface()
+            .connect(token)
+            .then(() => {
+              this.setOffline(false);
+              this.setLoggedIn(true);
+            })
+            .catch(() => {
+              this.redirectToLogin = true;
+            });
         })
         .catch(err => {
           window.localStorage.removeItem("token");

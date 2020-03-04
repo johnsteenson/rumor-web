@@ -4,6 +4,8 @@ import { projectModule } from './project/index';
 import { worldModule } from './world/index';
 import { RootState } from './types';
 
+import { createPlugin } from './plugin';
+
 Vue.use(Vuex);
 
 const state: RootState = {
@@ -16,6 +18,9 @@ const storeOptions: StoreOptions<RootState> = {
     project: projectModule,
     world: worldModule,
   },
+  plugins: [
+    createPlugin()
+  ]
 };
 
 export default new Vuex.Store<RootState>(storeOptions);

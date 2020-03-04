@@ -1,4 +1,5 @@
 import { TileChange } from '@/types/map';
+import { Store } from 'vuex';
 
 export abstract class RumorService {
 
@@ -19,6 +20,11 @@ export abstract class RumorService {
   public onMapTreeUpdate(callback: Function) {
     this.onMapTreeUpdateCallback = callback;
   }
+
+  abstract connect(token: string): Promise<void>;
+
+  abstract registerStoreEvents(store: Store<any>): void;
+
   abstract getMap(mapId: string): void;
 
   abstract getMapTree(): void;

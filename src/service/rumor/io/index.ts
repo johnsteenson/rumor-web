@@ -5,25 +5,28 @@ import { TileMap, TileChange, TileChangeEntry, TileMapTree } from '@/types/map';
 import { Tileset } from '@/types/tileset';
 
 import { serializeChanges, deserializeChanges } from './serialize';
+import { connectSocket, ConnectResponse } from './connect';
+
+import store from '@/store';
 
 import tileset from "@/data/tileset-world.json";
+import { Store } from 'vuex';
 
 export class RumorServiceIo extends RumorService {
 
-  private socketClient: SocketIOClient.Socket;
+  private store!: Store<any>;
 
-  constructor(socketClient: SocketIOClient.Socket) {
+  private socketClient!: SocketIOClient.Socket;
+
+  constructor() {
     super();
-
-    this.socketClient = socketClient;
-    this.registerEvents();
   }
 
-  private registerEvents() {
+  private registerSocketEvents() {
     this.socketClient.on("getMap", (mapData: any) => {
       const map: TileMap = mapData as TileMap;
       map.layer = createLayers(map.w, map.h, 2, map.buffer);
-      map.tileset = tileset as Tileset; // mapData.tileset as Tileset;
+      map.tileset = (tileset as unknown) as Tileset; // mapData.tileset as Tileset;
 
       this.onGetMapCallback(map);
     });
@@ -37,6 +40,26 @@ export class RumorServiceIo extends RumorService {
     this.socketClient.on("getMapTree", (tree: TileMapTree) => {
 
       this.onMapTreeUpdateCallback(tree);
+    });
+  }
+
+  public registerStoreEvents(store: Store<any>) {
+    this.store = store;
+  }
+
+  public async connect(token: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      connectSocket(token)
+        .then((response: ConnectResponse) => {
+          this.socketClient = response.socketClient;
+          this.store.commit('project/setSignedInUser', response.username);
+
+          this.registerSocketEvents();
+          resolve();
+        })
+        .catch(() => {
+          reject();
+        });
     });
   }
 

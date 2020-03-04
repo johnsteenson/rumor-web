@@ -4,6 +4,7 @@ import { createMap } from '@/lib/world/tilemap';
 import tileset from "@/data/tileset-world.json";
 import { TileMap } from '@/types/map';
 import { Tileset } from '@/types/tileset';
+import { Store } from 'vuex';
 
 export class RumorServiceLocal extends RumorService {
 
@@ -13,6 +14,14 @@ export class RumorServiceLocal extends RumorService {
     super();
 
     this.map = createMap("Local Map", 200, 200, tileset as any);
+  }
+
+  public connect(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  public registerStoreEvents(store: Store<any>) {
+
   }
 
   public getMap(mapId: string) {

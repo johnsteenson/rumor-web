@@ -3,6 +3,7 @@
     <div>
       <h1>
         Rumor
+        <span>{{signedInUser}}</span>
         <span v-if="isOffline">(Offline Mode)</span>
       </h1>
     </div>
@@ -18,6 +19,8 @@ const project = namespace("project");
 @Component
 export default class Header extends Vue {
   @project.State("offline") isOffline!: boolean;
+
+  @project.State("signedInUser") signedInUser!: string;
 }
 </script>
 

@@ -3,15 +3,18 @@ import { RumorService } from './interface';
 import { RumorServiceLocal } from "./local";
 import { RumorServiceIo } from "./io";
 
-import SocketIo from 'socket.io-client';
+
 
 let serviceInterface: RumorService;
 
-export async function createLocalInterface(): Promise<RumorService> {
+/*
+async function createLocalInterface(): Promise<RumorService> {
   serviceInterface = new RumorServiceLocal();
   return serviceInterface;
 }
+*/
 
+/*
 export function createServiceInterface(token: string): Promise<RumorService> {
   return new Promise<RumorService>((resolve, reject) => {
     const socket = SocketIo(process.env.VUE_APP_SERVICE_ENDPOINT);
@@ -35,6 +38,13 @@ export function createServiceInterface(token: string): Promise<RumorService> {
     });
   });
 }
+*/
+
+/* Since I'm putting the local mode on hold for awhile, just create
+an IO service interface. */
+
+serviceInterface = new RumorServiceIo();
+
 
 export function getServiceInterface(): RumorService {
   if (!serviceInterface) {

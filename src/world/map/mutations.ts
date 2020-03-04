@@ -243,10 +243,8 @@ export class MapMutator {
   public async flushChanges(changes?: TileChange) {
     const serviceInterface = await getServiceInterface();
     if (changes) {
-      /* console.log('Pushed changes', changes); */
       serviceInterface.updateMap(changes);
     } else {
-      /* console.log('List changes', this.changeRegistry.filterActiveChangeList()!.entries); */
       serviceInterface.updateMap(this.changeRegistry.filterActiveChangeList()!);
     }
   }
