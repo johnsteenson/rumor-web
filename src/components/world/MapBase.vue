@@ -112,6 +112,7 @@ export default class MapBase extends CanvasBase {
         this.mapStore.onMapChange((map: TileMap) => {
           this.map = map;
           this.refreshViewport();
+          this.scrollViewportTo(0, 0);
           this.updateCoordinates();
           this.drawMap();
         });

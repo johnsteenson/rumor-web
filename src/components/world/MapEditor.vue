@@ -286,12 +286,15 @@ export default class MapEditor extends MapBase {
       y: Math.floor((mouse.y - this.startDrawCanvasCoor.y) * DRAG_COEFFICIENT)
     };
 
-    if (ptDiff.x !== 0) {
+    this.startDrawCanvasCoor.x = mouse.x;
+    this.startDrawCanvasCoor.y = mouse.y;
+
+    /*
+    if (ptDiff.x !== 0 || ptDiff.y !== 0) {
       this.startDrawCanvasCoor.x = mouse.x;
-    }
-    if (ptDiff.y !== 0) {
       this.startDrawCanvasCoor.y = mouse.y;
     }
+    */
 
     this.scrollViewport(-ptDiff.x, -ptDiff.y);
   }

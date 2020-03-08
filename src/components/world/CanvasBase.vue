@@ -194,6 +194,30 @@ export default class CanvasBase extends Vue {
     this.onResize();
   }
 
+  protected scrollViewportTo(xVal: number, yVal: number) {
+    this.scrollRect.innerL = xVal;
+    this.scrollRect.innerT = yVal;
+
+    const xLen = this.scrollRect.innerR - this.scrollRect.innerL;
+    const yLen = this.scrollRect.innerB - this.scrollRect.innerT;
+
+    this.scrollRect.innerL = clampBetween(
+      this.scrollRect.innerL,
+      this.scrollRect.outerL,
+      this.scrollRect.outerR - xLen
+    );
+    this.scrollRect.innerR = this.scrollRect.innerL + this.drawArea.w;
+
+    this.scrollRect.innerT = clampBetween(
+      this.scrollRect.innerT,
+      this.scrollRect.outerT,
+      this.scrollRect.outerB - yLen
+    );
+    this.scrollRect.innerB = this.scrollRect.innerT + this.drawArea.h;
+
+    this.onResize();
+  }
+
   protected updateScrollRect(rect: ScrollRect) {
     this.scrollRect = {
       ...rect
