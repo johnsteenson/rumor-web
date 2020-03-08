@@ -111,8 +111,9 @@ export default class MapBase extends CanvasBase {
       this.$nextTick(() => {
         this.mapStore.onMapChange((map: TileMap) => {
           this.map = map;
-          this.drawMap();
           this.refreshViewport();
+          this.updateCoordinates();
+          this.drawMap();
         });
 
         this.mapStore.onMapUpdate((tileChange?: TileChangeEntry[]) => {
@@ -216,12 +217,10 @@ export default class MapBase extends CanvasBase {
   public canvasToTileCoor(x: number, y: number): Point {
     return {
       x:
-        Math.floor(x / this.tileSize.scaledW) -
-        this.mapOffset.x +
+        Math.floor((x - this.mapOffset.x) / this.tileSize.scaledW) +
         this.tileDrawRect.tile.l,
       y:
-        Math.floor(y / this.tileSize.scaledH) -
-        this.mapOffset.y +
+        Math.floor((y - this.mapOffset.y) / this.tileSize.scaledH) +
         this.tileDrawRect.tile.t
     };
   }

@@ -14,7 +14,8 @@ const state: ProjectState = {
     h: 16,
   },
   loggedIn: false,
-  offline: false
+  offline: false,
+  signedInUser: ""
 };
 
 export const projectModule: Module<ProjectState, RootState> = {

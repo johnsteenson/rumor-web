@@ -30,6 +30,12 @@ export interface TileMap {
   lastUpdated: Date;
 }
 
+export interface TileMapTree {
+  id: string;
+  title: string;
+  children: TileMapTree[];
+}
+
 export interface MapView {
   map: TileMap;
   tileset: Tileset;

@@ -18,7 +18,7 @@ import Login from "@/Login.vue";
 import BrowserCheck from "@/components/BrowserCheck.vue";
 
 import { signIn, signInWithToken } from "@/service/signIn";
-import { createServiceInterface } from "@/service/rumor";
+import { getServiceInterface } from "@/service/rumor";
 
 const project = namespace("project");
 
@@ -42,10 +42,15 @@ export default class App extends Vue {
     if (token) {
       signInWithToken(token)
         .then(() => {
-          createServiceInterface(token).then(() => {
-            this.setOffline(false);
-            this.setLoggedIn(true);
-          });
+          getServiceInterface()
+            .connect(token)
+            .then(() => {
+              this.setOffline(false);
+              this.setLoggedIn(true);
+            })
+            .catch(() => {
+              this.redirectToLogin = true;
+            });
         })
         .catch(err => {
           window.localStorage.removeItem("token");
@@ -62,7 +67,7 @@ export default class App extends Vue {
 .app-contents {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
 }
 
 #app {
@@ -70,6 +75,6 @@ export default class App extends Vue {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
-  height: 100%;
+  height: 100vh;
 }
 </style>

@@ -5,5 +5,6 @@ export interface ProjectState {
   offline: boolean,
   loggedIn: boolean,
   defaultTileSize: Dimension;
+  signedInUser: string;
 }
 

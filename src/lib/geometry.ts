@@ -42,6 +42,17 @@ export function createRectFromPts(p1: Point, p2: Point, maxSize?: number): Rect 
   }
 }
 
+export function clipRectToArea(rect: Rect, w: number, h: number): Rect {
+  const outRect: Rect = {
+    l: rect.l > 0 ? rect.l : 0,
+    t: rect.t > 0 ? rect.t : 0,
+    r: rect.r < w ? rect.r : w,
+    b: rect.b < h ? rect.b : h
+  };
+
+  return outRect;
+}
+
 export function isRectEqual(r1: Rect, r2: Rect): boolean {
   if (
     r1.l === r1.l &&
@@ -49,6 +60,22 @@ export function isRectEqual(r1: Rect, r2: Rect): boolean {
     r1.r === r2.r &&
     r1.b === r2.b
   ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isPtInArea(pt: Point, w: number, h: number) {
+  if (pt.x >= 0 && pt.x < w && pt.y >= 0 && pt.y < h) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isPtInRect(pt: Point, r: Rect): boolean {
+  if (pt.x >= r.l && pt.x < r.r && pt.y >= r.t && pt.y < r.b) {
     return true;
   }
 

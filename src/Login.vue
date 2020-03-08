@@ -8,8 +8,12 @@
         <input v-model="password" id="login-password" type="password" />
 
         <button type="button" @click="login" class="btn btn-primary">Login</button>
-        <button type="button" @click="useOffline" class="btn btn-secondary">Offline Mode</button>
+
         <span class="login-error" v-if="errorMsg">{{errorMsg}}</span>
+
+        <div class="reg-link">
+          <a href="https://service.webrpg.dev/register">Register for account</a>
+        </div>
       </Card>
     </div>
   </div>
@@ -20,10 +24,12 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 import { Getter, namespace } from "vuex-class";
 import Card from "@/components/ui/Card.vue";
 
-import { createLocalInterface, createServiceInterface } from "@/service/rumor";
+import { getServiceInterface } from "@/service/rumor";
 import { signIn, signInWithToken } from "@/service/signIn";
 
 const project = namespace("project");
+
+// <button type="button" @click="useOffline" class="btn btn-secondary">Offline Mode</button>
 
 @Component({
   components: {
@@ -47,11 +53,13 @@ export default class App extends Vue {
     }
     signIn(this.username, this.password)
       .then((token: string) => {
-        createServiceInterface(token).then(() => {
-          window.localStorage.setItem("token", token);
-          this.setOffline(false);
-          this.setLoggedIn(true);
-        });
+        getServiceInterface()
+          .connect(token)
+          .then(() => {
+            window.localStorage.setItem("token", token);
+            this.setOffline(false);
+            this.setLoggedIn(true);
+          });
       })
       .catch(err => {
         this.errorMsg = "Invalid username or password";
@@ -62,12 +70,14 @@ export default class App extends Vue {
     } catch (err) {}
   }
 
+  /*
   public async useOffline() {
     await createLocalInterface();
 
     this.setOffline(true);
     this.setLoggedIn(true);
   }
+  */
 }
 </script>
 
@@ -110,5 +120,10 @@ button {
   font-weight: bold;
   display: block;
   color: #bb0000;
+}
+
+.reg-link {
+  margin-top: 8px;
+  font-size: 0.9rem;
 }
 </style>

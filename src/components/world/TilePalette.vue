@@ -1,5 +1,5 @@
 <template>
-  <div class="tile-palette">
+  <div class="tile-palette" @wheel="onWheel">
     <CanvasScrollport
       :scrollRect="scrollRect"
       :size="containerArea"
@@ -58,11 +58,11 @@ export default class TilePalette extends TilesetBase {
   }
 
   public mounted() {
-    registerWindowEvent("wheel", this.onWheel.bind(this));
+    // registerWindowEvent("wheel", this.onWheel.bind(this));
   }
 
   public beforeDestroy() {
-    unregisterWindowEvent("wheel");
+    // unregisterWindowEvent("wheel");
   }
 
   public pointerDown(event: PointerEvent) {

@@ -22,7 +22,13 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch, Inject } from "vue-property-decorator";
 import { TileSize, Rect, Point } from "@/types/geometry";
-import { isRectEqual, createRectFromPts } from "@/lib/geometry";
+import {
+  isRectEqual,
+  createRectFromPts,
+  isPtInRect,
+  isPtInArea,
+  clipRectToArea
+} from "@/lib/geometry";
 import {
   MapView,
   TileChangeEntry,
@@ -168,6 +174,10 @@ export default class MapEditor extends MapBase {
       section = this.tilesetView.tileset.sections[this.tilesetView.curSection],
       tileSelection = this.toolView.tileSelection;
 
+    if (!isPtInArea(tilePt, this.map.w, this.map.h)) {
+      return;
+    }
+
     if (this.startDrawTileCoor.x === -1) {
       this.startDrawTileCoor.x = tilePt.x;
       this.startDrawTileCoor.y = tilePt.y;
@@ -293,6 +303,10 @@ export default class MapEditor extends MapBase {
 
     let hoverRect: Rect;
 
+    if (!isPtInArea(tilePt, this.map.w, this.map.h)) {
+      return;
+    }
+
     switch (this.pointerMode) {
       case MapPointerMode.COPYING:
         hoverRect = createRectFromPts(
@@ -303,12 +317,16 @@ export default class MapEditor extends MapBase {
         break;
 
       default:
-        hoverRect = {
-          l: tilePt.x,
-          t: tilePt.y,
-          r: tilePt.x + tileSelection.w,
-          b: tilePt.y + tileSelection.h
-        };
+        hoverRect = clipRectToArea(
+          {
+            l: tilePt.x,
+            t: tilePt.y,
+            r: tilePt.x + tileSelection.w,
+            b: tilePt.y + tileSelection.h
+          },
+          this.map.w,
+          this.map.h
+        );
         break;
     }
 
