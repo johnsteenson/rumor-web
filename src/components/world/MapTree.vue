@@ -51,6 +51,8 @@ export default class MapTree extends Vue {
 
       this.$set(this, "treeRoot", tree);
     });
+
+    getServiceInterface().getMapTree();
   }
 
   public treeItemSelected(treeItem: TreeItem) {
